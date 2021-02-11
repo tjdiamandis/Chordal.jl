@@ -1,0 +1,13 @@
+name = "ChordalDecomp"
+uuid = "c40dd8eb-886b-47e3-91a7-7e6ae22bd2fd"
+authors = ["Theo Diamandis"]
+version = "0.1.0"
+
+[compat]
+julia = "1.5"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
