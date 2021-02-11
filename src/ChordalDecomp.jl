@@ -5,6 +5,6 @@ using SparseArrays, SuiteSparse, LinearAlgebra
 using DataStructures
 
 
-# Write your package code here.
+include("chordal_extension.jl")
 
 end
