@@ -1,6 +1,6 @@
 import QDLDL
 
-function preprocess!!(mats::SparseMatrixCSC{<:Number, <:Integer}...)
+function preprocess!(mats::SparseMatrixCSC{<:Number, <:Integer}...)
     n = size(mats[1], 1)
     for mat in mats
         @assert size(mat) == (n, n)
