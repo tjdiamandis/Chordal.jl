@@ -3,6 +3,13 @@ uuid = "c40dd8eb-886b-47e3-91a7-7e6ae22bd2fd"
 authors = ["Theo Diamandis"]
 version = "0.1.0"
 
+[deps]
+DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+QDLDL = "bfc457fd-c171-5ab7-bd9e-d5dbfc242d63"
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+SuiteSparse = "4607b0f0-06f3-5cda-b6b1-a6196a1729e9"
+
 [compat]
 julia = "1.5"
 
