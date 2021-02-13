@@ -1,4 +1,5 @@
 import QDLDL
+using LightGraphs: SimpleGraph, maximal_cliques
 
 function preprocess!(mats::SparseMatrixCSC{<:Number, <:Integer}...)
     n = size(mats[1], 1)
@@ -29,7 +30,7 @@ end
 
 
 # TODO: Add ref for attribution to COSMO
-# this assumes a sparse lower triangular matrix L
+# NOTE: this assumes a sparse lower triangular matrix L
 function connect_graph!(L::SparseMatrixCSC)
 	# unconnected blocks don't have any entries below the diagonal in their right-most column
 	m = size(L, 1)
@@ -52,8 +53,14 @@ end
 
 # Gets chordal extension: a reordering + associated graph from cholesky
 function get_chordal_extension(sp_pattern::SparseMatrixCSC)
-	# TODO: Min degree preordering for sp_pattern
+	# TODO: Min degree preordering for sp_pattern? Or just let Cholesky handle?
     F = QDLDL.qdldl(sp_pattern, logical = true)
 	connect_graph!(F.L)
     return F.perm, F.L
+end
+
+
+function get_cliques(L::SparseMatrixCSC)
+	G = SimpleGraph(L + L')
+	return maximal_cliques(G)
 end
