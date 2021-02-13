@@ -7,10 +7,12 @@
 
 
 ## TODOs
-- [ ] Chordal Extension
-- [ ] Clique Tree formation from graph
-- [ ] Clique merging strategy
+- [X] Chordal Extension
+- [X] Clique Graph formation from graph
+- [X] Clique merging strategy
+- [ ] Actually test this stuff...
 - [ ] Index selector matrices
+- [ ] Use data structures that don't suck
 
 
 
@@ -19,9 +21,12 @@
     - multi-level nested dissection
     - minimum degree
         - P. R. Amestoy, T. A. Davis, and I. S Duﬀ. An approximate minimum degree ordering algorithm. SIAM Journal on Matrix Analysis and Applications, 17(4):886905, 1996.
+    - Basically handled by step 2 below
 2. Symbolic Cholesky factorization
     - This provides the **chordal extension** (get edge set `E` from `L`)
 3. Merge cliques into larger blocks
+    - form clique graph or tree
+    - choose heuristic merging algorithm
 4. Index selector matrices
 
 ### Clique Merging Strategies
