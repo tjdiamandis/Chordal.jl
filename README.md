@@ -13,7 +13,8 @@
 - [X] Actually test this stuff...
 - [X] Index selector matrices
 - [ ] **Use data structures that don't suck**
-- [ ] Get MWE for SDPs
+- [X] Get MWE for SDPs
+- [ ] **Unit test to ensure solutions are same**
 - [ ] Guillermo problem data
 - [ ] Scale this up; hope things don't slow to a crawl
 - [ ] Testing, lol
