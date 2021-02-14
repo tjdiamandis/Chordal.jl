@@ -53,7 +53,7 @@ function _merge_cliques!(cg, i, j)
 end
 
 
-function merge_cliques!(cg; verbose=true)
+function merge_cliques!(cg; verbose=false)
     max_val, max_ind = findmax([get_prop(cg, e, :weight) for e in edges(cg)])
 
     verbose && @info "Starting merge"
@@ -76,4 +76,9 @@ function get_edge(max_ind, edge_iter)
         count == max_ind && return src(e), dst(e)
         count += 1
     end
+end
+
+
+function get_cliques(cg)
+    return [get_prop(cg, i, :nodes) for i in 1:nv(cg)]
 end
