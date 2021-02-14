@@ -4,4 +4,5 @@ function build_perm_matrix(p)
     for i in 1:n
         P[i, p[i]] = 1.0
     end
+    return P
 end
