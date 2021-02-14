@@ -5,7 +5,8 @@ import GraphPlot
 unzip(a) = map(x->getfield.(a, x), fieldnames(eltype(a)))
 # Example from A Clique Graph Based Merging Strategy for Decomposable SDPs
 # by Michael Garstka, Mark Cannon, Paul Goulart
-# Figures 1 and 3
+#       See Figures 1 and 3
+#       Note: This does not include chordal extension (already chordal)
 
 ## Setup sparsity pattern
 n = 9
