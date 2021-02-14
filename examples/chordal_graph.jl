@@ -1,4 +1,5 @@
 using ChordalDecomp
+using LightGraphs, MetaGraphs
 import Plots
 import GraphPlot
 
@@ -41,14 +42,13 @@ preprocess!(sp)
 
 sparsity_graph = SimpleGraph(sp)
 cliques = maximal_cliques(sparsity_graph)
-
-println("Cliques are:")
-[println("C$i: $(cliques[i])") for i in 1:length(cliques)]
+@info join(vcat(["Cliques are:"], ["\n\t\tC$i: $(cliques[i])" for i in 1:length(cliques)]))
 GraphPlot.gplot(sparsity_graph, nodelabel=1:nv(sparsity_graph))
 
 
 ## Generate clique graph
 cg = generate_clique_graph(cliques)
+@info ("Initial cliques: $([string(a) for a in get_cliques(cg)])")
 node_labels = ["$i, $(get_prop(cg, i, :nodes))" for i in 1:nv(cg)]
 edge_labels = [get_prop(cg, e, :weight) for e in edges(cg)]
 plt = GraphPlot.gplot(
@@ -56,16 +56,18 @@ plt = GraphPlot.gplot(
         nodelabel=node_labels,
         edgelabel=edge_labels,
 )
+# c.f. Figure 3
 
 
 ## Merge cliques
 merge_cliques!(cg; verbose=true)
+@info ("Final cliques: $([string(a) for a in get_cliques(cg)])")
+
 node_labels = ["$(get_prop(cg, i, :nodes))" for i in 1:nv(cg)]
 edge_labels = [get_prop(cg, e, :weight) for e in edges(cg)]
-
-# c.f. Figure 3
 plt = GraphPlot.gplot(
         cg,
         nodelabel=node_labels,
         edgelabel=edge_labels,
 )
+# c.f. Figure 3
