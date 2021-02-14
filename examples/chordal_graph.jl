@@ -71,3 +71,13 @@ plt = GraphPlot.gplot(
         edgelabel=edge_labels,
 )
 # c.f. Figure 3
+
+
+
+
+## Selector Matrices Testing
+Cℓs = get_cliques(cg)
+Tℓs = make_selectors(Cℓs, n)
+
+Cℓs[1]
+Tℓs[1]' * sparse([1 1 ; 1 1]) * Tℓs[1]
