@@ -16,6 +16,7 @@
 - [ ] Get MWE for SDPs
 - [ ] Guillermo problem data
 - [ ] Scale this up; hope things don't slow to a crawl
+- [ ] Testing, lol
 
 
 
