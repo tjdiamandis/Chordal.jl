@@ -1,4 +1,4 @@
-using LightGraphs: src, dst, get_edge
+using LightGraphs: src, dst, edges, add_edge!, nv
 using MetaGraphs: MetaGraph, set_prop!, get_prop
 
 function generate_clique_graph(cliques)
@@ -56,9 +56,9 @@ end
 function merge_cliques!(cg; verbose=false)
     max_val, max_ind = findmax([get_prop(cg, e, :weight) for e in edges(cg)])
 
-    verbose && @info "Starting merge"
+    verbose && @info "Starting merge; nv = $(nv(cg))"
     while max_val > 0
-        i, j = get_edge(max_ind, edges(cg))
+        i, j = _get_edge(max_ind, edges(cg))
         if verbose
             @info "Merging cliques $(get_prop(cg, i, :nodes)) and $(get_prop(cg, j, :nodes))\n\t\t\tweight: $max_val"
         end
@@ -66,11 +66,11 @@ function merge_cliques!(cg; verbose=false)
         _merge_cliques!(cg, i, j)
         max_val, max_ind = findmax([get_prop(cg, e, :weight) for e in edges(cg)])
     end
-    verbose && @info "Finished merging; max weight = $max_val"
+    verbose && @info "Finished merging; nv = $(nv(cg))"
 end
 
 
-function get_edge(max_ind, edge_iter)
+function _get_edge(max_ind, edge_iter)
     count = 1
     for e in edge_iter
         count == max_ind && return src(e), dst(e)
