@@ -10,9 +10,12 @@
 - [X] Chordal Extension
 - [X] Clique Graph formation from graph
 - [X] Clique merging strategy
-- [ ] Actually test this stuff...
-- [ ] Index selector matrices
-- [ ] Use data structures that don't suck
+- [X] Actually test this stuff...
+- [X] Index selector matrices
+- [ ] **Use data structures that don't suck**
+- [ ] Get MWE for SDPs
+- [ ] Guillermo problem data
+- [ ] Scale this up; hope things don't slow to a crawl
 
 
 
