@@ -10,7 +10,6 @@ LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 MatrixDepot = "b51810bb-c9f3-55da-ae3c-350fc1fbce05"
 MetaGraphs = "626554b9-1ddb-594c-aa3c-2596fe9399a5"
 QDLDL = "bfc457fd-c171-5ab7-bd9e-d5dbfc242d63"
-SimpleWeightedGraphs = "47aef6b3-ad0c-573a-a1e2-d07658019622"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 SuiteSparse = "4607b0f0-06f3-5cda-b6b1-a6196a1729e9"
 
