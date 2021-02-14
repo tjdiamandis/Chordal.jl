@@ -1,7 +1,7 @@
 import QDLDL
 using LightGraphs: SimpleGraph, maximal_cliques
 
-function preprocess!(mats::SparseMatrixCSC{<:Number, <:Integer}...)
+function preprocess!(mats::SparseMatrixCSC{T, <:Integer}...) where {T}
     n = size(mats[1], 1)
     for mat in mats
         @assert size(mat) == (n, n)
@@ -12,7 +12,7 @@ end
 
 
 # Gets sparsity pattern of the sum of mats
-function sparsity_pattern(mats::SparseMatrixCSC{<:Number, <:Integer}...)
+function sparsity_pattern(mats::SparseMatrixCSC{T, <:Integer}...) where {T}
     n = size(mats[1])[1]
 
     # TODO: For very large matrices, can just record the CartesianIndex's or I, J's
@@ -32,7 +32,7 @@ end
 
 # TODO: Add ref for attribution to COSMO
 # NOTE: this assumes a sparse lower triangular matrix L
-function connect_graph!(L::SparseMatrixCSC)
+function _connect_graph!(L::SparseMatrixCSC)
 	# unconnected blocks don't have any entries below the diagonal in their right-most column
 	m = size(L, 1)
 	row_val = L.rowval
@@ -56,7 +56,7 @@ end
 function get_chordal_extension(sp_pattern::SparseMatrixCSC)
 	# TODO: Min degree preordering for sp_pattern? Or just let Cholesky handle?
     F = QDLDL.qdldl(sp_pattern, logical = true)
-	connect_graph!(F.L)
+	_connect_graph!(F.L)
     return F.perm, F.L
 end
 
