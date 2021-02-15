@@ -21,7 +21,7 @@ function get_selectors(input_mat::SparseMatrixCSC; verbose=true)
 
     cliques = get_cliques(L)
     cg = generate_clique_graph(cliques)
-    # merge_cliques!(cg; verbose=verbose)
+    merge_cliques!(cg; verbose=verbose)
 
     Cℓs = get_cliques(cg)
     Tℓs = make_selectors_from_cliques(Cℓs, n)
