@@ -1,7 +1,6 @@
 using ChordalDecomp
 using LightGraphs, MetaGraphs
-import Plots
-import GraphPlot
+import Plots, GraphPlot
 
 unzip(a) = map(x->getfield.(a, x), fieldnames(eltype(a)))
 # Example from A Clique Graph Based Merging Strategy for Decomposable SDPs
