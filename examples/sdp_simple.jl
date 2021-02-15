@@ -71,21 +71,20 @@ sp_pattern = sparse(unzip(nonzero_inds)..., ones(length(nonzero_inds)))
 sp_pattern = sp_pattern + sp_pattern'
 P, Cℓs, Tℓs = get_selectors(sp_pattern)
 
-
 model = Model(Mosek.Optimizer)
 @variable(model, u[1:m])
 A = build_A(nonzero_inds, u, u_match)
 S = Vector{AbstractMatrix}(undef, length(Cℓs))
 for p=1:length(Cℓs)
     len_p = length(Cℓs[p])
-    # @constraint(m, Tℓs[p]*A_prime*Tℓs[p]' - sparse(I(len_p)) ∈ PSDCone())
-
     S[p] = @variable(model, [1:len_p, 1:len_p] in PSDCone(), base_name="Cℓ_$p")
     global A -= Tℓs[p]'*S[p]*Tℓs[p]
-    # @constraint(m, Tℓs[p]*A_prime*Tℓs[p]' - sparse(I(len_p)) .== S[p])
-    # @constraint(m, A + P'*Tℓs[p]'*S[p]*Tℓs[p]*P .== sparse(I(n)))
 end
-@constraint(model, A .== C)
+
+# Exploits the sparsity in the constraints
+for p = 1:length(Cℓs)
+        @constraint(model, Tℓs[p]*A*Tℓs[p]' .== Tℓs[p]*C*Tℓs[p]')
+end
 
 
 ## Solve problem
