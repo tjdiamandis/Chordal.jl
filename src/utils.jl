@@ -1,4 +1,5 @@
 function build_perm_matrix(p)
+    isnothing(p) && return I
     n = length(p)
     P = spzeros(n, n)
     for i in 1:n
