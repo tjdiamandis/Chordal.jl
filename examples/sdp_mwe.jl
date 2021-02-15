@@ -4,97 +4,62 @@ using ChordalDecomp
 using MosekTools
 using SparseArrays, JuMP, LinearAlgebra, Random
 
-function print_and_return(x, i, n)
-    @info "$i/$n"
-    return x
-end
 
-function block(i, n)
-    A = spzeros(n, n)
-    block_size = randn() > 0 ? 2 : 5
-    A[i:min(i+block_size,n), i:min(i+block_size,n)] .= 1
-    return A
-end
+rand_seed = 123
 
-function build_ΣAᵢuᵢ(m, u; rng=0)
-    Random.seed!(rng)
-    n = length(u)
-    A = spzeros(GenericAffExpr{Float64, VariableRef}, n, n)
-    for i=1:n
-        Q = block(i, n)
-        for (j, k, v) ∈ zip(findnz(Q)...)
-            A[j,k] = u[i]*v
-            # add_to_expression!(A[j, k], u[i], v)
-        end
-    end
-    return A
-end
-
-rng = 123
-
-## Problem Setup
-n = 100
-C = sparse(I(n))
-
+## Without decomposition
+n = 200
+c, F, G, xstar, D = generate_random_sdp(n, rand_seed=rand_seed)
 m = Model(optimizer_with_attributes(
     Mosek.Optimizer,
     "QUIET" => false,
 ))
-@variable(m, u[1:n])
-A = build_ΣAᵢuᵢ(m, u; rng=rng)
-@show nnz(A)
-@show size(A)
+@variable(m, x[1:n])
+@constraint(m, sum(F[i]*x[i] for i in 1:n) + G ∈ PSDCone())
+@objective(m, Min, dot(c, x))
+time_non_chordal = @timed optimize!(m)
 
-## Standard Solve
-@time begin
-    @constraint(m, A - C ∈ PSDCone())
-    @info "Finished adding constraints"
-    @objective(m, Min, u[n])
-    optimize!(m)
-end
-
-pstar = value.(u[n])
-utrue = value.(u)
-
+xv = value.(x)
+pstar = dot(c,xv)
 @info "termination status: $(termination_status(m))"
 @info "solution status: $(primal_status(m))"
-@info "optimal value: $pstar"
-## Functions to do things™  (Chordal Decomp)
+@info "Difference with true optimal: $(norm(xv - xstar))"
+@info "Optimal value: $pstar"
 
-# TODO: this function should probably go into the package
-function build_constraints!(m, A, C)
-    n = size(A)[1]
+
+## Decomposition Setup
+function build_constraints!(m, A)
     P, Cℓs, Tℓs = get_selectors(A)
-    A_prime = P*A*P'
-    C_prime = P*C*P'
+    A = P*A*P'
     S = Vector{AbstractMatrix}(undef, length(Cℓs))
     for p=1:length(Cℓs)
             len_p = length(Cℓs[p])
             S[p] = @variable(m, [1:len_p, 1:len_p] in PSDCone(), base_name="Cℓ$p")
-            A_prime -= Tℓs[p]'*S[p]*Tℓs[p]
+            A -= Tℓs[p]'*S[p]*Tℓs[p]
     end
     for p = 1:length(Cℓs)
-            @constraint(m, Tℓs[p]*A_prime*Tℓs[p]' .== Tℓs[p]*C_prime*Tℓs[p]')
+            @constraint(m, Tℓs[p]*A*Tℓs[p]' .== 0)
     end
 end
 
-
+m2 = Model(optimizer_with_attributes(
+    Mosek.Optimizer,
+    "QUIET" => false,
+))
+@variable(m2, y[1:n])
+A = dropzeros(sum(F[i]*y[i] for i in 1:n) + G)
+nnzA = nnz(A)
+@info "There are $nnzA nonzeros; density = $(round(nnzA/n^2, digits=3))"
+time_constraints = @timed build_constraints!(m2, A)
+@info "Finished adding constraints, time = $(time_constraints.time)s"
+@objective(m2, Min, dot(c,y))
+@info "Finished setup"
 ## do things™
-m = Model(Mosek.Optimizer)
-@variable(m, u[1:n])
-A = build_ΣAᵢuᵢ(m, u; rng=rng)
-build_constraints!(m, A, sparse(I(n)))
-@info "Finished adding constraints"
-##
-@time begin
-    # A_prime = build_new_and_improved_constraint!(m, A)
-    # @constraint(m, A_prime .== sparse(I(n)))
-    @objective(m, Min, u[n])
-    optimize!(m)
-end
+time_chordal = @timed optimize!(m2)
 
-u_chordal = value.(u)
-pstar_chordal = value(u[end])
+yv = value.(y)
+pstar_chordal = dot(c,yv)
 @info "termination status: $(termination_status(m))"
 @info "solution status: $(primal_status(m))"
-@info "pstar = $(pstar_chordal)"
+@info "difference with non-chordal: $(norm(yv - xv))"
+@info "Time with chordal is $(time_chordal.time)s vs $(time_non_chordal.time)s"
