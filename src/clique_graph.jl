@@ -81,6 +81,6 @@ function _get_edge(max_ind, edge_iter)
 end
 
 
-function get_cliques(cg)
+function get_cliques(cg::MetaGraph)
     return [get_prop(cg, i, :nodes) for i in 1:nv(cg)]
 end
