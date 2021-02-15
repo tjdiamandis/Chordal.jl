@@ -37,7 +37,7 @@ function sparsity_pattern(mat::SparseMatrixCSC{T, <:Integer}) where {T}
     @inbounds for col = 1:n, k = mat.colptr[col]:(mat.colptr[col+1]-1)
         ret[rowvals(mat)[k], col] = 1.0
 	end
-	
+
     return ret
 end
 
@@ -70,7 +70,7 @@ end
 # Gets chordal extension: a reordering + associated graph from cholesky
 function get_chordal_extension(sp_pattern::SparseMatrixCSC; verbose=true)
 	# TODO: Min degree preordering for sp_pattern? Or just let Cholesky handle?
-    F = QDLDL.qdldl(sp_pattern, logical=true, perm=nothing)
+    F = QDLDL.qdldl(sp_pattern, logical=true)
 	_connect_graph!(F.L; verbose=verbose)
 	num_nonzero_added = 2*nnz(F.L) + size(sp_pattern)[1] - nnz(sp_pattern)
 	@info "Chordal Extension added $num_nonzero_added nonzeros."
