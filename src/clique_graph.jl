@@ -23,6 +23,7 @@ function generate_clique_graph(cliques)
 end
 
 
+# TODO: this should be a user-defined function
 function weight_function(c_i, c_j, l_int)
     l_ci = length(c_i)
     l_cj = length(c_j)
@@ -31,6 +32,7 @@ function weight_function(c_i, c_j, l_int)
 end
 
 
+# TODO: update all the data structures. Embarassing code...
 function _merge_cliques!(cg, i, j)
     new_clique = union(get_prop(cg, i, :nodes), get_prop(cg, j, :nodes))
     n_rem = degree(cg, i) < degree(cg, j) ? i : j
