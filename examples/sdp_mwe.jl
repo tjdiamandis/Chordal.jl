@@ -1,3 +1,5 @@
+cd(joinpath(@__DIR__, ".."))
+Pkg.activate(".")
 using ChordalDecomp
 using MosekTools
 using SparseArrays, JuMP, LinearAlgebra, Random
@@ -7,79 +9,92 @@ function print_and_return(x, i, n)
     return x
 end
 
-Random.seed!(1234)
-
 function block(i, n)
     A = spzeros(n, n)
-    block_size = randn() > -2 ? 2 : 200
+    block_size = randn() > 0 ? 2 : 5
     A[i:min(i+block_size,n), i:min(i+block_size,n)] .= 1
     return A
 end
 
-## Problem Setup
-
-n = 200
-m = Model(Mosek.Optimizer)
-A = spzeros(GenericAffExpr{Float64, VariableRef}, n, n)
-@variable(m, u[1:n])
-
-for i=1:n
-    Q = block(i, n)
-    for (j, k, v) ∈ zip(findnz(Q)...)
-        A[j,k] = 0.0001
-        add_to_expression!(A[j, k], u[i], v)
+function build_ΣAᵢuᵢ(m, u; rng=0)
+    Random.seed!(rng)
+    n = length(u)
+    A = spzeros(GenericAffExpr{Float64, VariableRef}, n, n)
+    for i=1:n
+        Q = block(i, n)
+        for (j, k, v) ∈ zip(findnz(Q)...)
+            A[j,k] = u[i]*v
+            # add_to_expression!(A[j, k], u[i], v)
+        end
     end
+    return A
 end
 
+rng = 123
+
+## Problem Setup
+n = 100
+C = sparse(I(n))
+
+m = Model(optimizer_with_attributes(
+    Mosek.Optimizer,
+    "QUIET" => false,
+))
+@variable(m, u[1:n])
+A = build_ΣAᵢuᵢ(m, u; rng=rng)
 @show nnz(A)
 @show size(A)
 
 ## Standard Solve
 @time begin
-    @constraint(m, A - sparse(I(n)) ∈ PSDCone())
+    @constraint(m, A - C ∈ PSDCone())
     @info "Finished adding constraints"
-    @objective(m, Min, 0)
+    @objective(m, Min, u[n])
     optimize!(m)
 end
 
+pstar = value.(u[n])
+utrue = value.(u)
 
-
-
+@info "termination status: $(termination_status(m))"
+@info "solution status: $(primal_status(m))"
+@info "optimal value: $pstar"
 ## Functions to do things™  (Chordal Decomp)
-function do_the_thing™(A)
-    ChordalDecomp.preprocess!(A)
-    sp = sparsity_pattern(A)
-    P, L = get_chordal_extension(sp)
-    P = build_perm_matrix(P)
-    cliques = get_cliques(L)
-    cg = generate_clique_graph(cliques)
-    merge_cliques!(cg; verbose=true)
-    Cℓs = get_cliques(cg)
-    Tℓs = make_selectors(Cℓs, n)
-    return P, Cℓs, Tℓs
-end
 
-
-function build_new_and_improved_constraint!(m, A)
-    P, Cℓs, Tℓs = do_the_thing™(A)
-    A_prime = P'*A*P
+# TODO: this function should probably go into the package
+function build_constraints!(m, A, C)
+    n = size(A)[1]
+    P, Cℓs, Tℓs = get_selectors(A)
+    A_prime = P*A*P'
+    C_prime = P*C*P'
     S = Vector{AbstractMatrix}(undef, length(Cℓs))
     for p=1:length(Cℓs)
             len_p = length(Cℓs[p])
-            S[p] = @variable(m, [1:len_p, 1:len_p], PSD)
-            # A_prime += Tℓs[p]' * S[p] * Tℓs[p]
-
-            @constraint(m, Tℓs[p]*A_prime*Tℓs[p]' + S[p] .== sparse(I(len_p)))
+            S[p] = @variable(m, [1:len_p, 1:len_p] in PSDCone(), base_name="Cℓ$p")
+            A_prime -= Tℓs[p]'*S[p]*Tℓs[p]
     end
-    return nothing
+    for p = 1:length(Cℓs)
+            @constraint(m, Tℓs[p]*A_prime*Tℓs[p]' .== Tℓs[p]*C_prime*Tℓs[p]')
+    end
 end
 
 
 ## do things™
+m = Model(Mosek.Optimizer)
+@variable(m, u[1:n])
+A = build_ΣAᵢuᵢ(m, u; rng=rng)
+build_constraints!(m, A, sparse(I(n)))
+@info "Finished adding constraints"
+##
 @time begin
     # A_prime = build_new_and_improved_constraint!(m, A)
     # @constraint(m, A_prime .== sparse(I(n)))
-    build_new_and_improved_constraint!(m, A)
-    @info "Made the constraint."
+    @objective(m, Min, u[n])
     optimize!(m)
 end
+
+u_chordal = value.(u)
+pstar_chordal = value(u[end])
+@info "termination status: $(termination_status(m))"
+@info "solution status: $(primal_status(m))"
+@info "pstar = $(pstar_chordal)"
