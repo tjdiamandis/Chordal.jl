@@ -11,17 +11,17 @@ function make_selectors_from_cliques(cliques, n)
 end
 
 
-function get_selectors(input_mat::SparseMatrixCSC)
+function get_selectors(input_mat::SparseMatrixCSC; verbose=true)
     n = size(input_mat)[1]
     preprocess!(input_mat)
 
     sp = sparsity_pattern(input_mat)
-    P, L = get_chordal_extension(sp)
+    P, L = get_chordal_extension(sp; verbose=verbose)
     P = build_perm_matrix(P)
 
     cliques = get_cliques(L)
     cg = generate_clique_graph(cliques)
-    merge_cliques!(cg; verbose=true)
+    # merge_cliques!(cg; verbose=verbose)
 
     Cℓs = get_cliques(cg)
     Tℓs = make_selectors_from_cliques(Cℓs, n)
