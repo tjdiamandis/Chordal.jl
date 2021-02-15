@@ -73,7 +73,8 @@ P, Cℓs, Tℓs = get_selectors(sp_pattern)
 
 model = Model(Mosek.Optimizer)
 @variable(model, u[1:m])
-A = build_A(nonzero_inds, u, u_match)
+A = P*build_A(nonzero_inds, u, u_match)*P'
+C = P*C*P'
 S = Vector{AbstractMatrix}(undef, length(Cℓs))
 for p=1:length(Cℓs)
     len_p = length(Cℓs[p])
