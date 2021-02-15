@@ -1,4 +1,4 @@
-using LightGraphs: src, dst, edges, add_edge!, nv
+using LightGraphs: src, dst, edges, add_edge!, rem_edge!, nv, degree, neighbors, rem_vertex!
 using MetaGraphs: MetaGraph, set_prop!, get_prop
 
 function generate_clique_graph(cliques)
