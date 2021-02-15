@@ -30,10 +30,23 @@ function sparsity_pattern(mats::SparseMatrixCSC{T, <:Integer}...) where {T}
 end
 
 
+function sparsity_pattern(mat::SparseMatrixCSC{T, <:Integer}) where {T}
+    n = size(mat, 1)
+	ret = spzeros(n,n)
+
+    @inbounds for col = 1:n, k = mat.colptr[col]:(mat.colptr[col+1]-1)
+        ret[rowvals(mat)[k], col] = 1.0
+	end
+	
+    return ret
+end
+
+
 # TODO: Add ref for attribution to COSMO
 # NOTE: this assumes a sparse lower triangular matrix L
-function _connect_graph!(L::SparseMatrixCSC)
+function _connect_graph!(L::SparseMatrixCSC; verbose=true)
 	# unconnected blocks don't have any entries below the diagonal in their right-most column
+	count = 0
 	m = size(L, 1)
 	row_val = L.rowval
 	col_ptr = L.colptr
@@ -47,16 +60,20 @@ function _connect_graph!(L::SparseMatrixCSC)
 		end
 		if !connected
 			L[j+1, j] = 1
+			count += 1
 		end
 	end
+	verbose && @info "Connected graph; added $count edges"
 end
 
 
 # Gets chordal extension: a reordering + associated graph from cholesky
-function get_chordal_extension(sp_pattern::SparseMatrixCSC)
+function get_chordal_extension(sp_pattern::SparseMatrixCSC; verbose=true)
 	# TODO: Min degree preordering for sp_pattern? Or just let Cholesky handle?
-    F = QDLDL.qdldl(sp_pattern, logical = true)
-	_connect_graph!(F.L)
+    F = QDLDL.qdldl(sp_pattern, logical=true, perm=nothing)
+	_connect_graph!(F.L; verbose=verbose)
+	num_nonzero_added = 2*nnz(F.L) + size(sp_pattern)[1] - nnz(sp_pattern)
+	@info "Chordal Extension added $num_nonzero_added nonzeros."
     return F.perm, F.L
 end
 
