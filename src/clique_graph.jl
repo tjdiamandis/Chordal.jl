@@ -58,7 +58,7 @@ end
 function merge_cliques!(cg; verbose=false)
     max_val, max_ind = findmax([get_prop(cg, e, :weight) for e in edges(cg)])
 
-    verbose && @info "Starting merge; nv = $(nv(cg))"
+    @info "Starting merge; num cliques = $(nv(cg))"
     while max_val > 0
         i, j = _get_edge(max_ind, edges(cg))
         if verbose
@@ -68,7 +68,7 @@ function merge_cliques!(cg; verbose=false)
         _merge_cliques!(cg, i, j)
         max_val, max_ind = findmax([get_prop(cg, e, :weight) for e in edges(cg)])
     end
-    verbose && @info "Finished merging; nv = $(nv(cg))"
+    @info "Finished merging; num cliques = $(nv(cg))"
 end
 
 
