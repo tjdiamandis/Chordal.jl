@@ -1,4 +1,7 @@
+cd(joinpath(@__DIR__, ".."))
+Pkg.activate(".")
 using ChordalDecomp
+using LinearAlgebra, SparseArrays
 using LightGraphs, MetaGraphs
 import Plots, GraphPlot
 
@@ -76,7 +79,4 @@ plt = GraphPlot.gplot(
 
 ## Selector Matrices Testing
 Cℓs = get_cliques(cg)
-Tℓs = make_selectors(Cℓs, n)
-
-Cℓs[1]
-Tℓs[1]' * sparse([1 1 ; 1 1]) * Tℓs[1]
+Tℓs = make_selectors_from_cliques(Cℓs, n)
