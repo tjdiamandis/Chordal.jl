@@ -11,12 +11,12 @@ function build_perm_matrix(p)
 end
 
 
+# min c^Tx st ΣF_ix_i + G ∈ PSDCONE()
 # Build from KKT conditions:
-# # KKT Conditions
 # Fx = sum(F[i]*xstar[i] for i in 1:n) + G
 # all(eigvals(Matrix(Fx)) .>= 0)
 # all(eigvals(D) .>= 0)
-# all([tr(F[i]*D) .== c[i] for i in 1:n])
+# all([0 .== c[i] - tr(F[i]*D) for i in 1:n])
 # tr(Fx*D) .== 0
 function generate_random_sdp(n; rand_seed=0)
     Random.seed!(rand_seed)
