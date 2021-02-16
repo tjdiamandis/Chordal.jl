@@ -20,6 +20,8 @@ end
 # tr(Fx*D) .== 0
 function generate_random_sdp(n; rand_seed=0)
     Random.seed!(rand_seed)
+
+    # Can assume diagonal WLOG (move around ortho matrix in trace)
     D = diagm(1 .+ rand(n))
     F = Vector{SparseMatrixCSC{Float64}}(undef, n)
     c = Vector{Float64}(undef, n)
