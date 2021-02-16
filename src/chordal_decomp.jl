@@ -11,7 +11,24 @@ function make_selectors_from_cliques(cliques, n)
 end
 
 
-function get_selectors(input_mat::SparseMatrixCSC; verbose=true)
+function make_selectors_from_clique_graph(cg, n)
+    selector_mats = Vector{SparseMatrixCSC}(undef, nv(cg))
+    for i in 1:nv(cg)
+        clique = get_prop(cg, i, :nodes)
+        selector_mat = spzeros(length(clique), n)
+
+        idx = 1
+        for node in clique
+            selector_mat[idx, node] = 1.0
+            idx += 1
+        end
+        append!(selector_mats,[selector_mat])
+    end
+    return selector_mats
+end
+
+
+function get_selectors(input_mat::SparseMatrixCSC; verbose=true, ret_cliques=true)
     n = size(input_mat)[1]
     preprocess!(input_mat)
 
@@ -23,7 +40,12 @@ function get_selectors(input_mat::SparseMatrixCSC; verbose=true)
     cg = generate_clique_graph(cliques)
     merge_cliques!(cg; verbose=verbose)
 
-    Cℓs = get_cliques(cg)
-    Tℓs = make_selectors_from_cliques(Cℓs, n)
-    return P, Cℓs, Tℓs
+    if ret_cliques
+        Cℓs = get_cliques(cg)
+        Tℓs = make_selectors_from_cliques(Cℓs, n)
+        return P, Cℓs, Tℓs
+    end
+
+    Tℓs = make_selectors_from_clique_graph(cg, n)
+    return P, Tℓs
 end
