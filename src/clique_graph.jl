@@ -68,7 +68,8 @@ function merge_cliques!(cg; verbose=false)
         _merge_cliques!(cg, i, j)
         max_val, max_ind = findmax([get_prop(cg, e, :weight) for e in edges(cg)])
     end
-    @info "Finished merging; num cliques = $(nv(cg))"
+    max_clique_size = maximum(length(cliques[i]) for i in 1:nv(cg))
+    @info "Finished merging; num cliques = $(nv(cg)). Max size is $max_clique_size."
 end
 
 
