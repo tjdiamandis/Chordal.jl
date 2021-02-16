@@ -15,6 +15,7 @@ function make_selectors_from_clique_graph(cg, n)
     selector_mats = Vector{SparseMatrixCSC}(undef, nv(cg))
     for i in 1:nv(cg)
         clique = get_prop(cg, i, :nodes)
+        isnothing
         selector_mat = spzeros(length(clique), n)
 
         idx = 1
@@ -22,7 +23,7 @@ function make_selectors_from_clique_graph(cg, n)
             selector_mat[idx, node] = 1.0
             idx += 1
         end
-        append!(selector_mats,[selector_mat])
+        selector_mats[i] = selector_mat
     end
     return selector_mats
 end
