@@ -1,87 +1,94 @@
-using LightGraphs: src, dst, edges, add_edge!, rem_edge!, nv, degree, neighbors, rem_vertex!
-using MetaGraphs: MetaGraph, set_prop!, get_prop
+struct CliqueGraph
+    membership_mat::SparseMatrixCSC{Bool}
+    edge_mat::Matrix{Float64}
+    active_cliques::Set{Int}
+end
 
-function generate_clique_graph(cliques)
-    N = length(cliques)
-    cliques = [Set(c) for c in cliques]
-    # G = SimpleWeightedGraph(N)
-    G = MetaGraph(N)
-    for i in 1:N
-        set_prop!(G, i, :nodes, cliques[i])
-    end
-    for i in 1:N, j in i+1:N
-        # TODO: iterate through for performance?
-        l_int = length(intersect(cliques[i], cliques[j]))
-        if l_int > 0
-            w_ij = weight_function(cliques[i], cliques[j], l_int)
-            # add_edge!(G, i, j, w_ij)
-            add_edge!(G, i, j)
-            set_prop!(G, i, j, :weight, w_ij)
+
+function generate_clique_graph(cliques, n::Integer)
+    m = length(cliques)
+    membership_mat = spzeros(Bool, n, m)
+
+    # TODO: edge mat as matrix or as list of tuples?
+    edge_mat = zeros(Float64, m, m)
+    active_cliques = Set(1:m)
+
+    for (idx, clique) in enumerate(cliques)
+        for node in clique
+            membership_mat[node, idx] = true
         end
     end
-    return G
+    for i in 1:m, j in i+1:m
+        ci = @view(membership_mat[:, i])
+        cj = @view(membership_mat[:, j])
+        l_int = sum(ci .& cj)
+        if l_int > 0
+            edge_mat[i,j] = edge_mat[j,i] = weight_function(ci, cj)
+        end
+    end
+
+    return CliqueGraph(membership_mat, edge_mat, active_cliques)
 end
 
 
 # TODO: this should be a user-defined function
-function weight_function(c_i, c_j, l_int)
-    l_ci = length(c_i)
-    l_cj = length(c_j)
-    l_union = l_ci + l_cj - l_int
+function weight_function(ci, cj)
+    l_ci = sum(ci)
+    l_cj = sum(cj)
+    l_union = sum(ci .| cj)
     return l_ci^3 + l_cj^3 - l_union^3
 end
 
 
-# TODO: update all the data structures. Embarassing code...
-function _merge_cliques!(cg, i, j)
-    new_clique = union(get_prop(cg, i, :nodes), get_prop(cg, j, :nodes))
-    n_rem = degree(cg, i) < degree(cg, j) ? i : j
-    n_keep = degree(cg, i) < degree(cg, j) ? j : i
+function _merge_cliques!(cg::CliqueGraph, i, j)
+    # nodes X cliques
+    n, m = size(cg.membership_mat)
 
-    set_prop!(cg, n_keep, :nodes, new_clique)
+    ci = @view(cg.membership_mat[:, i])
+    cj = @view(cg.membership_mat[:, j])
+    new_clique =
+    n_rem = sum(ci) < sum(cj) ? i : j
+    n_keep = sum(ci) < sum(cj) ? j : i
 
-    rem_edge!(cg, i, j)
-    for neighbor in union(neighbors(cg, n_rem), neighbors(cg, n_keep))
-        # Some redundancy here. Idk if it matters much
-        rem_edge!(cg, n_rem, neighbor)
-        add_edge!(cg, neighbor, n_keep)
+    cg.membership_mat[:,n_keep] .= cg.membership_mat[:, i] .| cg.membership_mat[:, j]
+    cg.membership_mat[:,n_rem].= false
+    cg.edge_mat[n_keep,n_rem] = cg.edge_mat[n_rem,n_keep] = 0.0
 
-        # Update weight
-        l_int = length(intersect(new_clique, get_prop(cg, neighbor, :nodes)))
-        w_ij = weight_function(new_clique, get_prop(cg, neighbor, :nodes), l_int)
-        set_prop!(cg, neighbor, n_keep, :weight, w_ij)
+    for k in 1:m
+        k == n_keep && continue
+        # Remove edges from n_rem
+        cg.edge_mat[k,n_rem] = cg.edge_mat[n_rem,k] = 0.0
+
+        # Update edges to n_keep
+        wij = weight_function(cg.membership_mat[:,n_keep], @view(cg.membership_mat[:,k]))
+        cg.edge_mat[k,n_keep] = cg.edge_mat[n_keep,k] = wij
     end
-    rem_vertex!(cg, n_rem)
+
+    pop!(cg.active_cliques, n_rem)
+
 end
 
 
-function merge_cliques!(cg; verbose=false)
-    max_val, max_ind = findmax([get_prop(cg, e, :weight) for e in edges(cg)])
+function merge_cliques!(cg::CliqueGraph; verbose=false)
+    # nodes X cliques
+    n, m = size(cg.membership_mat)
+    max_clique_size = maximum(sum(cg.membership_mat[:,i]) for i in 1:m)
+    @info "Starting merging; num cliques = $m. Max size is $max_clique_size."
 
-    @info "Starting merge; num cliques = $(nv(cg))"
+    max_val, max_ind = findmax(cg.edge_mat)
     while max_val > 0
-        i, j = _get_edge(max_ind, edges(cg))
-        if verbose
-            @info "Merging cliques $(get_prop(cg, i, :nodes)) and $(get_prop(cg, j, :nodes))\n\t\t\tweight: $max_val"
-        end
-
+        #TODO: verbose printing
+        i = max_ind[1]
+        j = max_ind[2]
         _merge_cliques!(cg, i, j)
-        max_val, max_ind = findmax([get_prop(cg, e, :weight) for e in edges(cg)])
+        max_val, max_ind = findmax(cg.edge_mat)
     end
-    max_clique_size = maximum(length(cliques[i]) for i in 1:nv(cg))
-    @info "Finished merging; num cliques = $(nv(cg)). Max size is $max_clique_size."
+    dropzeros!(cg.membership_mat)
+    max_clique_size = maximum(nnz(cg.membership_mat[:,i]) for i in cg.active_cliques)
+    @info "Finished merging; num cliques = $(length(cg.active_cliques)). Max size is $max_clique_size."
 end
 
 
-function _get_edge(max_ind, edge_iter)
-    count = 1
-    for e in edge_iter
-        count == max_ind && return src(e), dst(e)
-        count += 1
-    end
-end
-
-
-function get_cliques(cg::MetaGraph)
-    return [get_prop(cg, i, :nodes) for i in 1:nv(cg)]
+function get_cliques(cg::CliqueGraph)
+    return [findnz(cg.membership_mat[:,i])[1] for i in cg.active_cliques]
 end
