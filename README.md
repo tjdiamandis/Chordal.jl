@@ -12,9 +12,11 @@
 - [X] Clique merging strategy
 - [X] Actually test this stuff...
 - [X] Index selector matrices
-- [ ] **Use data structures that don't suck**
+- [X] **Use data structures that don't suck**
 - [X] Get MWE for SDPs
 - [ ] **Unit test to ensure solutions are same**
+- [ ] Implement maximal cliques algorithm
+- [ ] Implement different pre-cholesky reorderings
 - [ ] Guillermo problem data
 - [ ] Scale this up; hope things don't slow to a crawl
 - [ ] Testing, lol
