@@ -1,25 +1,18 @@
 # ChordalDecomp
 
-[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://tjdiamandis.github.io/ChordalDecomp.jl/stable)
-[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://tjdiamandis.github.io/ChordalDecomp.jl/dev)
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)]()
+[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)]()
 [![Build Status](https://github.com/tjdiamandis/ChordalDecomp.jl/workflows/CI/badge.svg)](https://github.com/tjdiamandis/ChordalDecomp.jl/actions)
 [![Coverage](https://codecov.io/gh/tjdiamandis/ChordalDecomp.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/tjdiamandis/ChordalDecomp.jl)
 
 
 ## TODOs
-- [X] Chordal Extension
-- [X] Clique Graph formation from graph
-- [X] Clique merging strategy
-- [X] Actually test this stuff...
-- [X] Index selector matrices
-- [X] **Use data structures that don't suck**
-- [X] Get MWE for SDPs
-- [ ] **Unit test to ensure solutions are same**
+- [ ] **Unit tests**
 - [ ] Implement maximal cliques algorithm
 - [ ] Implement different pre-cholesky reorderings
-- [ ] Guillermo problem data
-- [ ] Scale this up; hope things don't slow to a crawl
-- [ ] Testing, lol
+- [ ] Implement clique tree algorithms
+- [ ] Allow user-specified weight algorithm for clique graph merging
+- [ ] Test with larger problems
 
 
 
@@ -28,7 +21,7 @@
     - multi-level nested dissection
     - minimum degree
         - P. R. Amestoy, T. A. Davis, and I. S Duﬀ. An approximate minimum degree ordering algorithm. SIAM Journal on Matrix Analysis and Applications, 17(4):886905, 1996.
-    - Basically handled by step 2 below
+    - Can be handled by step 2 below with certain Cholesky implementations
 2. Symbolic Cholesky factorization
     - This provides the **chordal extension** (get edge set `E` from `L`)
 3. Merge cliques into larger blocks
@@ -47,12 +40,17 @@
         - https://www.cs.cornell.edu/info/people/csun/papers/cct.ps
 2. Pick an arbitrary clique as the root. Form a topological ordering (number ea. child before parent) that satisfies the running intersection property to get a perfect elimination ordering
 
-#### Clique Graph based (Garstka paper, implemented in COSMO)
+#### Clique Graph based ([Garstka et al.](https://arxiv.org/abs/1911.05615), implemented in [COSMO.jl](https://github.com/oxfordcontrol/COSMO.jl))
 1. Create clique graph
     - Compute weight function e(C_i, C_j) = w_{ij}
     - If eigenvalue is dominant step, can use `e(Ci, Cj) = |Ci|^3 + |Cj|^3 − |Ci ∪ Cj|^3`.
     - See Section 3 of paper
-2. Algorithm:
+2. Algorithm (greedy):
     1. Merge cliques connected by edge with highest positive weight
     2. Recompute weights
     3. If there are more positive weights, repeat. Else, break.
+
+
+## References
+- Lieven Vandenberghe and Martin Andersen's [Chordal Graphs and Semidefinite Optimization](https://www.seas.ucla.edu/~vandenbe/publications/chordalsdp.pdf) provides an excellent overview of this area.
+- The clique graph implementation follows [Garstka et al.](https://arxiv.org/abs/1911.05615). The accompanying solver [COSMO.jl](https://github.com/oxfordcontrol/COSMO.jl) has chordal decomposition built-in and several great customization features.
