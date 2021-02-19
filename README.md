@@ -8,7 +8,8 @@
 
 ## TODOs
 - [ ] **Unit tests**
-- [ ] Implement maximal cliques algorithm
+- [ ] PSD matrix completion
+- [ ] Implement maximal cliques algorithm to avoid LightGraphs dep?
 - [ ] Implement different pre-cholesky reorderings
 - [ ] Implement clique tree algorithms
 - [ ] Allow user-specified weight algorithm for clique graph merging
