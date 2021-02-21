@@ -17,7 +17,7 @@ function make_selectors_from_clique_graph(cg::CliqueGraph, n)
     selector_mats = Vector{SparseMatrixCSC}(undef, m)
     for (i, cnum) in enumerate(cg.active_cliques)
         clique = cg.membership_mat[:,cnum]
-        selector_mat = spzeros(length(clique), n)
+        selector_mat = spzeros(sum(clique), n)
 
         idx = 1
         for node in findnz(clique)[1]
