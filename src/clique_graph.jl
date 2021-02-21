@@ -90,5 +90,5 @@ end
 
 
 function get_cliques(cg::CliqueGraph)
-    return [findnz(cg.membership_mat[:,i])[1] for i in cg.active_cliques]
+    return [findnz(cg.membership_mat[:,i])[1] for i in sort(collect(cg.active_cliques))]
 end
