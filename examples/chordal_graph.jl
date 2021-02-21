@@ -1,11 +1,24 @@
 cd(joinpath(@__DIR__, ".."))
 Pkg.activate(".")
 using ChordalDecomp
-using LinearAlgebra, SparseArrays
-using LightGraphs, MetaGraphs
+using LinearAlgebra, SparseArrays, LightGraphs
 import Plots, GraphPlot
 
 unzip(a) = map(x->getfield.(a, x), fieldnames(eltype(a)))
+function plot_clique_graph(cg::ChordalDecomp.CliqueGraph)
+        nc = length(cg.active_cliques)
+        ind = sort(collect(cg.active_cliques))
+        reduced_edge_mat = cg.edge_mat[ind,ind]
+        clique_graph = SimpleGraph(reduced_edge_mat)
+        node_labels = ["$c" for (i, c) in enumerate(get_cliques(cg))]
+        edge_labels = [string(reduced_edge_mat[src(e),dst(e)]) for e in edges(clique_graph)]
+        plt = GraphPlot.gplot(
+                clique_graph,
+                nodelabel=node_labels,
+                edgelabel=edge_labels,
+        )
+end
+
 # Example from A Clique Graph Based Merging Strategy for Decomposable SDPs
 # by Michael Garstka, Mark Cannon, Paul Goulart
 #       See Figures 1 and 3
@@ -32,15 +45,14 @@ nonzero_inds = vcat([
     ],
     [(i,i) for i in 1:n]
 )
-sp = sparse(unzip(nonzero_inds)..., ones(length(nonzero_inds)))
-
-# c.f. Figure 1
+sp = sparse(unzip(nonzero_inds)..., [10i+j for (i, j) in nonzero_inds])
 Plots.spy(sp, ms=10)
+# c.f. Figure 1
 
 
 ## Find cliques
-sp = sp + sp'
-preprocess!(sp)
+sp = sp + tril(sp, -1)'
+ChordalDecomp.preprocess!(sp)
 
 sparsity_graph = SimpleGraph(sp)
 cliques = maximal_cliques(sparsity_graph)
@@ -49,34 +61,26 @@ GraphPlot.gplot(sparsity_graph, nodelabel=1:nv(sparsity_graph))
 
 
 ## Generate clique graph
-cg = generate_clique_graph(cliques)
+cg = generate_clique_graph(cliques, n)
 @info ("Initial cliques: $([string(a) for a in get_cliques(cg)])")
-node_labels = ["$i, $(get_prop(cg, i, :nodes))" for i in 1:nv(cg)]
-edge_labels = [get_prop(cg, e, :weight) for e in edges(cg)]
-plt = GraphPlot.gplot(
-        cg,
-        nodelabel=node_labels,
-        edgelabel=edge_labels,
-)
+plot_clique_graph(cg)
 # c.f. Figure 3
 
 
 ## Merge cliques
 merge_cliques!(cg; verbose=true)
 @info ("Final cliques: $([string(a) for a in get_cliques(cg)])")
-
-node_labels = ["$(get_prop(cg, i, :nodes))" for i in 1:nv(cg)]
-edge_labels = [get_prop(cg, e, :weight) for e in edges(cg)]
-plt = GraphPlot.gplot(
-        cg,
-        nodelabel=node_labels,
-        edgelabel=edge_labels,
-)
+plot_clique_graph(cg)
 # c.f. Figure 3
 
 
 
-
-## Selector Matrices Testing
+## Selector Matrices
+mat = Matrix(sp)
 Cℓs = get_cliques(cg)
 Tℓs = make_selectors_from_cliques(Cℓs, n)
+for i in 1:length(Cℓs)
+        println("Clique $i: $(string(Cℓs[i]))")
+        println("Submatrix: ")
+        display((Tℓs[i]*mat*Tℓs[i]'))
+end
