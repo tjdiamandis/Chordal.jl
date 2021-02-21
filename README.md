@@ -7,7 +7,8 @@
 
 
 ## TODOs
-- [ ] **Unit tests**
+- [ ] Performance and type stability
+- [ ] Unit tests
 - [ ] PSD matrix completion
 - [ ] Implement maximal cliques algorithm to avoid LightGraphs dep?
 - [ ] Implement different pre-cholesky reorderings
