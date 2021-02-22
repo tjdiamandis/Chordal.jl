@@ -1,12 +1,12 @@
 cd(joinpath(@__DIR__, ".."))
 Pkg.activate(".")
 using ChordalDecomp
-using JuMP, MosekTools, Hypatia
+using JuMP, MosekTools
 using SparseArrays, LinearAlgebra, Random
 
 
 rand_seed = 1234
-n = 100
+n = 200
 c, F, G, xstar, D = generate_random_sdp(n, rand_seed=rand_seed)
 
 
@@ -32,15 +32,19 @@ pstar = dot(c,xv)
 ## Chordal Decomposition Setup
 # A + S ∈ PSDCone()
 function build_constraints!(m, A)
-    P, Cℓs, Tℓs = get_selectors(A)
+    P, Tℓs = get_selectors(A; verbose=false, ret_cliques=false)
+    num_cliques = length(Tℓs)
     A = P*A*P'
-    S = Vector{AbstractMatrix}(undef, length(Cℓs))
-    for p=1:length(Cℓs)
-            len_p = length(Cℓs[p])
-            S[p] = @variable(m, [1:len_p, 1:len_p] in PSDCone(), base_name="Cℓ$p")
-            A -= Tℓs[p]'*S[p]*Tℓs[p]
+    S = Vector{AbstractMatrix}(undef, num_cliques)
+    for p=1:num_cliques
+            len_p = size(Tℓs[p], 1)
+            S[p] = sparse(@variable(m, [1:len_p, 1:len_p] in PSDCone(), base_name="Cℓ$p"))
+            for (j, k, v) ∈ zip(findnz(-Tℓs[p]'*S[p]*Tℓs[p])...)
+                add_to_expression!(A[j,k], v)
+            end
+            # @info "Build constraint $p of $num_cliques"
     end
-    for p = 1:length(Cℓs)
+    for p = 1:num_cliques
             @constraint(m, Tℓs[p]*A*Tℓs[p]' .== 0)
     end
 end
@@ -49,7 +53,7 @@ end
 function build_A(F, G, y)
     n = length(y)
     A = spzeros(GenericAffExpr{Float64, VariableRef}, n, n)
-    for (j, k, v) ∈ zip(findnz(sparsity_pattern(F..., G))...)
+    for (j, k, v) ∈ zip(findnz(sparsity_pattern([F..., G]))...)
         A[j,k] = 1
     end
 
@@ -62,7 +66,7 @@ function build_A(F, G, y)
         add_to_expression!(A[j,k], G[j,k])
     end
 
-    for (j, k, v) ∈ zip(findnz(sparsity_pattern(F..., G))...)
+    for (j, k, v) ∈ zip(findnz(sparsity_pattern([F..., G]))...)
         A[j,k] -= 1
     end
     return A
