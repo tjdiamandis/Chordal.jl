@@ -8,7 +8,7 @@
 
 ## TODOs
 - [ ] Performance and type stability
-- [ ] Unit tests
+- [ ] Unit tests -- ensure data structure change worked
 - [ ] PSD matrix completion
 - [ ] Implement maximal cliques algorithm to avoid LightGraphs dep?
 - [ ] Implement different pre-cholesky reorderings
