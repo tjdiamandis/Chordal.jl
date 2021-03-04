@@ -21,4 +21,4 @@ MatrixDepot = "b51810bb-c9f3-55da-ae3c-350fc1fbce05"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test", "GraphPlot", "JuMP", "MatrixDepot"]
+test = ["Test", "JuMP", "MatrixDepot"]
