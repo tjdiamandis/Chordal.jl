@@ -1,20 +1,25 @@
 import QDLDL
 using LightGraphs: SimpleGraph, maximal_cliques
 
-function preprocess!(mats::SparseMatrixCSC{T, <:Integer}...) where {T}
-    n = size(mats[1], 1)
+function preprocess!(mats::AbstractVector{SparseMatrixCSC{T,S}}) where {T <: Number, S <: Integer}
     for mat in mats
-        @assert size(mat) == (n, n)
-		@assert all(mat .== mat')
-        dropzeros!(mat)
+        preprocess!(mat)
     end
+end
+
+function preprocess!(mat::SparseMatrixCSC{T, <:Integer}) where {T}
+    n = size(mat, 1)
+    @assert size(mat) == (n, n)
+	for i in 1:n, j in i+1:n
+		@assert mat[i,j] .== mat[j,i]
+	end
+    dropzeros!(mat)
 end
 
 
 # Gets sparsity pattern of the sum of mats
-function sparsity_pattern(mats::SparseMatrixCSC{T, <:Integer}...) where {T}
-    n = size(mats[1])[1]
-
+function sparsity_pattern(mats::AbstractVector{SparseMatrixCSC{T,S}}) where {T <: Number, S <: Integer}
+	n = size(mats[1])[1]
     # TODO: For very large matrices, can just record the CartesianIndex's or I, J's
     pattern = falses(n, n)
     for mat in mats
@@ -24,9 +29,12 @@ function sparsity_pattern(mats::SparseMatrixCSC{T, <:Integer}...) where {T}
     end
 
     # TODO: should this return as CartesianIndex?
-    # e.g. findall(pattern)
-    I, J, _ = findnz(sparse(pattern))
-    return sparse(I, J, ones(length(I)))
+	ret = spzeros(n,n)
+	for c in findall(pattern)
+		i, j = c[1], c[2]
+		ret[i,j] = ret[j,i] = 1.0
+	end
+    return ret
 end
 
 
@@ -68,12 +76,12 @@ end
 
 
 # Gets chordal extension: a reordering + associated graph from cholesky
-function get_chordal_extension(sp_pattern::SparseMatrixCSC; verbose=true)
+function get_chordal_extension(sp_pattern::SparseMatrixCSC; verbose=false)
 	# TODO: Min degree preordering for sp_pattern? Or just let Cholesky handle?
     F = QDLDL.qdldl(sp_pattern, logical=true)
 	_connect_graph!(F.L; verbose=verbose)
 	num_nonzero_added = 2*nnz(F.L) + size(sp_pattern)[1] - nnz(sp_pattern)
-	@info "Chordal Extension added $num_nonzero_added nonzeros."
+	verbose && @info "Chordal Extension added $num_nonzero_added nonzeros."
     return F.perm, F.L
 end
 
