@@ -1,5 +1,5 @@
 struct CliqueGraph
-    membership_mat::SparseMatrixCSC{Bool}
+    membership_mat::SparseMatrixCSC{Bool, Int}
     edge_mat::Matrix{Float64}
     active_cliques::Set{Int}
 end
@@ -35,32 +35,42 @@ end
 function weight_function(ci, cj)
     l_ci = sum(ci)
     l_cj = sum(cj)
-    l_union = sum(ci .| cj)
+    l_union = sum(ci[k] | cj[k] for k in 1:length(ci))
+    # l_union = 0.0
+    # for k in 1:length(ci)
+    #     # l_ci += ci[k]
+    #     # l_cj += cj[k]
+    #     l_union += ci[k] .| cj[k]
+    # end
     return l_ci^3 + l_cj^3 - l_union^3
 end
 
 
-function _merge_cliques!(cg::CliqueGraph, i, j)
+function _merge_cliques!(cg::CliqueGraph, i::Integer, j::Integer)
     # nodes X cliques
     n, m = size(cg.membership_mat)
 
     ci = @view(cg.membership_mat[:, i])
     cj = @view(cg.membership_mat[:, j])
-    new_clique =
+
     n_rem = sum(ci) < sum(cj) ? i : j
     n_keep = sum(ci) < sum(cj) ? j : i
+    c_keep = @view(cg.membership_mat[:,n_keep])
+    c_rem =  @view(cg.membership_mat[:,n_rem])
 
-    cg.membership_mat[:,n_keep] .= cg.membership_mat[:, i] .| cg.membership_mat[:, j]
-    cg.membership_mat[:,n_rem].= false
+    # Update membership matrix
+    c_keep .= ci .| cj
+    c_rem .= false
     cg.edge_mat[n_keep,n_rem] = cg.edge_mat[n_rem,n_keep] = 0.0
 
+    # TODO: change to only cliques with nonzero intersection
     for k in 1:m
         k == n_keep && continue
         # Remove edges from n_rem
         cg.edge_mat[k,n_rem] = cg.edge_mat[n_rem,k] = 0.0
 
         # Update edges to n_keep
-        wij = weight_function(cg.membership_mat[:,n_keep], @view(cg.membership_mat[:,k]))
+        wij = weight_function(c_keep, @view(cg.membership_mat[:,k]))
         cg.edge_mat[k,n_keep] = cg.edge_mat[n_keep,k] = wij
     end
 
@@ -72,8 +82,10 @@ end
 function merge_cliques!(cg::CliqueGraph; verbose=false)
     # nodes X cliques
     n, m = size(cg.membership_mat)
-    max_clique_size = maximum(sum(cg.membership_mat[:,i]) for i in 1:m)
-    @info "Starting merging; num cliques = $m. Max size is $max_clique_size."
+    if verbose
+        max_clique_size = maximum(nnz, @view(cg.membership_mat[:,i]) for i in 1:m)
+        @info "Starting merging; num cliques = $m. Max size is $max_clique_size."
+    end
 
     max_val, max_ind = findmax(cg.edge_mat)
     while max_val > 0
@@ -84,8 +96,10 @@ function merge_cliques!(cg::CliqueGraph; verbose=false)
         max_val, max_ind = findmax(cg.edge_mat)
     end
     dropzeros!(cg.membership_mat)
-    max_clique_size = maximum(nnz(cg.membership_mat[:,i]) for i in cg.active_cliques)
-    @info "Finished merging; num cliques = $(length(cg.active_cliques)). Max size is $max_clique_size."
+    if verbose
+        max_clique_size = maximum(nnz, @view(cg.membership_mat[:,i]) for i in cg.active_cliques)
+        @info "Finished merging; num cliques = $(length(cg.active_cliques)). Max size is $max_clique_size."
+    end
 end
 
 
