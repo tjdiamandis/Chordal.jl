@@ -27,7 +27,7 @@ function generate_random_sdp(n; rand_seed=0)
     c = Vector{Float64}(undef, n)
     for i in 1:n
         F[i] = spzeros(n, n)
-        block_size = randn() > 1 ? 2 : 10
+        block_size = randn() < 1.5 ? 2 : 10
         F[i][i:min(i+block_size,n), i:min(i+block_size,n)] .= 1
         c[i] = tr(D*F[i])
     end
