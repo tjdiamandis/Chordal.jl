@@ -1,4 +1,5 @@
 using Random
+using LightGraphs: is_connected
 
 function build_perm_matrix(p)
     isnothing(p) && return I
@@ -21,7 +22,7 @@ end
 #       tr(Fx*D) .== 0
 function generate_random_sdp(n; rand_seed=0)
     Random.seed!(rand_seed)
-    
+
     D = diagm(1 .+ rand(n))
     F = Vector{SparseMatrixCSC{Float64}}(undef, n)
     c = Vector{Float64}(undef, n)
@@ -37,3 +38,8 @@ function generate_random_sdp(n; rand_seed=0)
 
     return c, F, G, xstar, D
 end
+
+
+unzip(a) = map(x->getfield.(a, x), fieldnames(eltype(a)))
+
+is_separable(sp::SparseMatrixCSC) = !is_connected(SimpleGraph(sp))
