@@ -1,5 +1,6 @@
 import QDLDL
 using LightGraphs: SimpleGraph, maximal_cliques
+import AMD, Metis
 
 function preprocess!(mats::AbstractVector{SparseMatrixCSC{T,S}}) where {T <: Number, S <: Integer}
     for mat in mats
@@ -50,38 +51,30 @@ function sparsity_pattern(mat::SparseMatrixCSC{T, <:Integer}) where {T}
 end
 
 
-# TODO: Add ref for attribution to COSMO
-# NOTE: this assumes a sparse lower triangular matrix L
-function _connect_graph!(L::SparseMatrixCSC; verbose=true)
-	# unconnected blocks don't have any entries below the diagonal in their right-most column
-	count = 0
-	m = size(L, 1)
-	row_val = L.rowval
-	col_ptr = L.colptr
-	for j = 1:m-1
-		connected = false
-		for k in col_ptr[j]:col_ptr[j+1]-1
-			if row_val[k] > j
-				connected  = true
-				break
-			end
-		end
-		if !connected
-			L[j+1, j] = 1
-			count += 1
-		end
-	end
-	verbose && @info "Connected graph; added $count edges"
-end
-
-
 # Gets chordal extension: a reordering + associated graph from cholesky
-function get_chordal_extension(sp_pattern::SparseMatrixCSC; verbose=false)
-	# TODO: Min degree preordering for sp_pattern? Or just let Cholesky handle?
-    F = QDLDL.qdldl(sp_pattern, logical=true)
-	_connect_graph!(F.L; verbose=verbose)
-	num_nonzero_added = 2*nnz(F.L) + size(sp_pattern)[1] - nnz(sp_pattern)
+function get_chordal_extension(sp_pattern::SparseMatrixCSC; perm=nothing, verbose=false)
+	!issymmetric(sp_pattern) && error(ArgumentError("Matrix must be symmetric"))
+	n = size(sp_pattern)[1]
+
+	# Permutations: nothing, amd, vertex separators, TODO: add more options?
+	if isnothing(perm)
+		p = nothing
+	elseif perm == "amd"
+		p = AMD.amd(sp_pattern)
+	elseif perm == "vsep"
+		# Convert to Int64 for QDLDL (ret as Int32)
+		# first arg = perm (second = iperm)
+		p = Int.(Metis.permutation(sp_pattern)[1])
+	else
+		error(ArgumentError("Invalid permutation"))
+	end
+
+	F = QDLDL.qdldl(sp_pattern, perm=p, logical=true)
+	num_nonzero = 2*nnz(F.L) + n
+	num_nonzero_added = (num_nonzero - nnz(sp_pattern)) ÷ 2
+
 	verbose && @info "Chordal Extension added $num_nonzero_added nonzeros."
+	verbose && @info "Density: $(round(num_nonzero/n^2; digits=5))"
     return F.perm, F.L
 end
 
