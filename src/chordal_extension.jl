@@ -75,7 +75,7 @@ function get_chordal_extension(sp_pattern::SparseMatrixCSC; perm=nothing, verbos
 
 	verbose && @info "Chordal Extension added $num_nonzero_added nonzeros."
 	verbose && @info "Density: $(round(num_nonzero/n^2; digits=5))"
-    return F.perm, F.L
+    return F.perm, F.iperm, F.L
 end
 
 
