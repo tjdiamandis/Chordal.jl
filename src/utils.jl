@@ -1,5 +1,5 @@
 using Random
-using LightGraphs: is_connected
+using LightGraphs: SimpleGraph, is_connected
 
 function build_perm_matrix(p)
     isnothing(p) && return I
