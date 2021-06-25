@@ -18,37 +18,26 @@ function preprocess!(mat::SparseMatrixCSC{T, <:Integer}) where {T}
 end
 
 
-# Gets sparsity pattern of the sum of mats
+# Returns 0/1 sparsity pattern of a set of matrices
 function sparsity_pattern(mats::AbstractVector{SparseMatrixCSC{T,S}}) where {T <: Number, S <: Integer}
-	n = size(mats[1])[1]
-    # TODO: For very large matrices, can just record the CartesianIndex's or I, J's
-    pattern = falses(n, n)
-    for mat in mats
-        @inbounds for col = 1:n, k = mat.colptr[col]:(mat.colptr[col+1]-1)
-            pattern[rowvals(mat)[k], col] = true
-        end
-    end
-
-    # TODO: should this return as CartesianIndex?
-	ret = spzeros(n,n)
-	for c in findall(pattern)
-		i, j = c[1], c[2]
-		ret[i,j] = ret[j,i] = 1.0
+	n = size(mats[1], 1)
+	for mat in mats
+		!(n == size(mat, 1) && issymmetric(mat)) && error(ArgumentError(
+			"Matrices must be symmetric and have the same dimensions."
+		))
 	end
-    return ret
-end
 
-
-function sparsity_pattern(mat::SparseMatrixCSC{T, <:Integer}) where {T}
-    n = size(mat, 1)
+	# Build 0/1 sparsity pattern matrix
 	ret = spzeros(n,n)
-
-    @inbounds for col = 1:n, k = mat.colptr[col]:(mat.colptr[col+1]-1)
-        ret[rowvals(mat)[k], col] = 1.0
+	for mat in mats
+	    @inbounds for col in 1:n, k in nzrange(mat, col)
+	        ret[rowvals(mat)[k], col] = 1.0
+		end
 	end
 
     return ret
 end
+sparsity_pattern(mat::SparseMatrixCSC) = sparsity_pattern([mat])
 
 
 # Gets chordal extension: a reordering + associated graph from cholesky
