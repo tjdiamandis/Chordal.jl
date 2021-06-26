@@ -41,7 +41,7 @@ sparsity_pattern(mat::SparseMatrixCSC) = sparsity_pattern([mat])
 
 
 # Gets chordal extension: a reordering + associated graph from cholesky
-function get_chordal_extension(sp_pattern::SparseMatrixCSC; perm=nothing, verbose=false)
+function get_chordal_extension(sp_pattern::SparseMatrixCSC; perm="amd", verbose=false)
 	!issymmetric(sp_pattern) && error(ArgumentError("Matrix must be symmetric"))
 	n = size(sp_pattern)[1]
 
