@@ -138,9 +138,8 @@ function max_supernode_etree(L::SparseMatrixCSC, etree_par::Vector{Int})
     post_ord = get_postordering(etree_par, etree_children)
     deg⁺ = get_higher_deg(L)
 
-    # Vc = representative vertices
-    Vc = Vector{Int}(undef, 0)
-    sizehint!(Vc, n)
+    vreps = Vector{Int}(undef, 0)
+    sizehint!(vreps, n)
     snd_membership = zeros(Int, n)
     snd_par = zeros(Int, n)
 
@@ -154,7 +153,7 @@ function max_supernode_etree(L::SparseMatrixCSC, etree_par::Vector{Int})
 
         # v is a rep vertex
         if ŵ == -1
-            push!(Vc, v)
+            push!(vreps, v)
             snd_membership[v] = v
             u = v
         # otherwise, add v to snd(ŵ)
@@ -165,14 +164,27 @@ function max_supernode_etree(L::SparseMatrixCSC, etree_par::Vector{Int})
 
         for w in etree_children[v]
             w == ŵ && continue
-            # q(z) = u, a(z) = v; z is the vertex in Vc that satisfies w ∈ snd(z)
+            # q(z) = u, a(z) = v; z is the vertex in vreps that satisfies w ∈ snd(z)
             z = snd_membership[w]
             snd_par[z] = u
             # a[z] = v
         end
     end
 
-    return Vc, snd_par, snd_membership
+    # numbers the supernodes
+    par = zeros(Int, length(vreps))
+    @views for (ind, v) in enumerate(snd_par[vreps])
+        vrep_ind = findfirst(i->vreps[i] == v, 1:length(vreps))
+        if (!isnothing(vrep_ind)) par[ind] = vrep_ind end
+    end
+
+    # updates membership similarly
+    # TODO: make this efficient
+    for (ind, v) in enumerate(snd_membership)
+        snd_membership[ind] = findfirst(i->vreps[i] == v, 1:length(vreps))
+    end
+
+    return vreps, par, snd_membership
 
 end
 
