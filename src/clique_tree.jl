@@ -14,7 +14,7 @@ function generate_clique_tree(L, cliques)
     c_int_graph = generate_clique_graph(cliques, n, int_graph=true)
     edges_tree = max_weight_span_tree(c_int_graph, cliques)
     root, par, child = det_par_child(L, cliques, edges_tree)
-    postordering = get_postordering(root, par, child)
+    postordering = get_postordering(par, child)
 
     return CliqueTree(par, child, cliques, postordering)
 end
@@ -74,9 +74,10 @@ function det_children!(par, child, node, edges_tree)
 end
 
 
-function get_postordering(root, par, child)
-    m = length(par)
-    @assert par[root] == 0
+function get_postordering(par, child)
+    n = length(par)
+    root = findfirst(x->par[x] == 0, 1:n)
+    isnothing(root) && error(ArgumentError("Can't find root; set par[root] := 0"))
     visit_order = zeros(Int, m)
 
     # post order via DFS (https://en.wikipedia.org/wiki/Depth-first_search)
