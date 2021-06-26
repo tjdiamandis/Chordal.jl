@@ -78,10 +78,10 @@ function get_postordering(par, child)
     n = length(par)
     root = findfirst(x->par[x] == 0, 1:n)
     isnothing(root) && error(ArgumentError("Can't find root; set par[root] := 0"))
-    visit_order = zeros(Int, m)
+    visit_order = zeros(Int, n)
 
     # post order via DFS (https://en.wikipedia.org/wiki/Depth-first_search)
-    curr = m
+    curr = n
     S = [root]
     while !isempty(S)
         v = pop!(S)
@@ -89,7 +89,7 @@ function get_postordering(par, child)
         curr -= 1
         push!(S, child[v]...)
     end
-    postordering = sort(1:m, by=x->visit_order[x])
+    postordering = sort(1:n, by=x->visit_order[x])
 
     return postordering
 end
@@ -97,22 +97,24 @@ end
 
 """
     etree(A)
-Compute the elimination tree of a symmetric sparse matrix `A` from `triu(A)`.
+Compute the elimination tree of a lower triangular sparse matrix `L`
 """
-function etree(A::SparseMatrixCSC{Tv, Ti}) where {Tv <: AbstractFloat, Ti <: Integer}
-    !issymmetric(A) && throw(ArgumentError("Matrix must be symmetric"))
-    m, n = size(A)
+function etree(L::SparseMatrixCSC{Tv, Ti}) where {Tv <: AbstractFloat, Ti <: Integer}
+    n = size(L, 1)
     par = zeros(Ti, n)
     ancestor = zeros(Ti, n)
 
-    _etree(A, par, ancestor)
+    _etree(sparse(L'), par, ancestor)
+    count(x->x==0, par) > 1 && error(ArgumentError("L must be connected"))
     return par
 end
 
 # (almost) nonallocating verion of above
-function _etree(A::SparseMatrixCSC{Tv, Ti}, par::Vector{Ti}, ancestor::Vector{Ti}) where {Tv <: AbstractFloat, Ti <: Integer}
-    for col::Ti in 1:n, p in nzrange(A, col) #A.colptr[col]:(A.colptr[col+1]-1)
-        i = rowvals(A)[p]
+# Computes using the upper triangular part
+# TODO: change to lower triangular??
+function _etree(U::SparseMatrixCSC{Tv, Ti}, par::Vector{Ti}, ancestor::Vector{Ti}) where {Tv <: AbstractFloat, Ti <: Integer}
+    for col::Ti in 1:n, p in nzrange(U, col) #A.colptr[col]:(A.colptr[col+1]-1)
+        i = rowvals(U)[p]
         while !iszero(i) && i < col
             i_next = ancestor[i]
             ancestor[i] = col
@@ -123,4 +125,81 @@ function _etree(A::SparseMatrixCSC{Tv, Ti}, par::Vector{Ti}, ancestor::Vector{Ti
         end
     end
     return nothing
+end
+
+
+# Algorithm from Pothen and Sun
+#   restated in VA, Algorithm 4.1
+function max_supernode_etree(L::SparseMatrixCSC, etree_par::Vector{Int})
+    n = size(A, 1)
+    etree_children = get_children_from_par(etree_par)
+    post_ord = get_postordering(etree_par, etree_children)
+    deg⁺ = get_higher_deg(L)
+
+    # Vc = representative vertices
+    Vc = Vector{Int}(undef, 0)
+    sizehint!(Vc, n)
+    snd_membership = zeros(Int, n)
+    snd_par = zeros(Int, n)
+
+    for v = post_ord
+        ŵ = -1
+        for w in etree_children[v]
+            deg⁺[v] > deg⁺[w] - 1 && continue
+            ŵ = w
+            break
+        end
+
+        # v is a rep vertex
+        if ŵ == -1
+            push!(Vc, v)
+            snd_membership[v] = v
+            u = v
+        # otherwise, add v to snd(ŵ)
+        else
+            u = snd_membership[ŵ]
+            snd_membership[v] = u
+        end
+
+        for w in etree_children[v]
+            w == ŵ && continue
+            # q(z) = u, a(z) = v; z is the vertex in Vc that satisfies w ∈ snd(z)
+            z = snd_membership[w]
+            snd_par[z] = u
+            # a[z] = v
+        end
+    end
+
+    return Vc, snd_par, snd_membership
+
+end
+
+
+# input: parent vector
+# returns vector v st v[i] = {k | k is a child of i}
+function get_children_from_par(par::Vector{Int})
+    n = length(par)
+    children = [Set{Int}() for _ in 1:n]
+
+    for i in 1:n
+        par_i = par[i]
+        if par_i != 0
+            push!(children[par_i], i)
+        end
+    end
+
+    return children
+end
+
+
+# NOTE: Assumes that L has order σ = 1:n & is lower triangular
+function get_higher_deg(L::SparseMatrixCSC)
+    n = size(L, 1)
+    deg⁺ = zeros(Int, n)
+
+    for i in 1:n
+        deg⁺[i] = L.colptr[i+1] - L.colptr[i]
+    end
+
+    return deg⁺
 end
