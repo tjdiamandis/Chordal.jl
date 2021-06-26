@@ -112,7 +112,9 @@ end
 # (almost) nonallocating verion of above
 # Computes using the upper triangular part
 # TODO: change to lower triangular??
+# Davis. Direct Methods for Sparse Linear Systems, pg 42
 function _etree(U::SparseMatrixCSC{Tv, Ti}, par::Vector{Ti}, ancestor::Vector{Ti}) where {Tv <: AbstractFloat, Ti <: Integer}
+    n = size(U, 1)
     for col::Ti in 1:n, p in nzrange(U, col) #A.colptr[col]:(A.colptr[col+1]-1)
         i = rowvals(U)[p]
         while !iszero(i) && i < col
