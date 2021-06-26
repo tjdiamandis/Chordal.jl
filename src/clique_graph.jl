@@ -1,10 +1,24 @@
+# These algorithms are from
+#   GARSTKA M., CANNON M., GOULART P.:
+#   A clique graph based merging strategy for decomposable sdps.
+#   IFAC-PapersOnLine 53, 2 (2020), 7355–7361.
+
 struct CliqueGraph
-    membership_mat::SparseMatrixCSC{Bool, Int}
-    edge_mat::Matrix{Float64}
+    membership_mat::SparseMatrixCSC{Bool, Int}  # nodes x num_cliques
+    edge_mat::Matrix{Float64}                   # num_cliques x num_cliques
+    # TODO: change to bitset?
     active_cliques::Set{Int}
 end
 
+import Base.length
+length(cg::CliqueGraph) = size(cg.edge_mat, 1)
 
+
+# Input:
+#   cliques : vector of cliques
+#   n       : num nodes of graph
+# Output:
+#   CliqueGraph : rep of relationship bt cliques
 function generate_clique_graph(cliques, n::Integer)
     m = length(cliques)
     membership_mat = spzeros(Bool, n, m)
