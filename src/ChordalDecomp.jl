@@ -5,10 +5,13 @@ using SparseArrays, SuiteSparse, LinearAlgebra
 using DataStructures
 
 
-include("chordal_extension.jl")
-include("clique_graph.jl")
-include("chordal_decomp.jl")
 include("utils.jl")
+include("chordal_decomp.jl")
+include("chordal_extension.jl")
+include("chordal_graph.jl")
+include("clique_graph.jl")
+include("clique_tree.jl")
+include("completion.jl")
 
 export sparsity_pattern, get_chordal_extension
 export generate_clique_graph, merge_cliques!, get_cliques
