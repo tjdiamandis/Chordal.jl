@@ -133,7 +133,7 @@ end
 # Algorithm from Pothen and Sun
 #   restated in VA, Algorithm 4.1
 function max_supernode_etree(L::SparseMatrixCSC, etree_par::Vector{Int})
-    n = size(A, 1)
+    n = size(L, 1)
     etree_children = get_children_from_par(etree_par)
     post_ord = get_postordering(etree_par, etree_children)
     deg⁺ = get_higher_deg(L)
