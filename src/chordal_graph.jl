@@ -63,8 +63,10 @@ References
 of hypergraphs, and selectively reduce acyclic hypergraphs](https://epubs.siam.org/doi/pdf/10.1137/0213035?casa_token=A22jkwrsrL0AAAAA:rx-G6F21ubTkMiJmRTH3IKqxmFTo_IVWDDZfJig5lsZxnQtNH2vUKWfZ3eZJKUv9CiKbIPt1VQs)
 by Robert Tarjan and Mihalis Yannakakis
 """
-function is_chordal(A::SparseMatrixCSC)
-    peo = maximum_cardinality_search(A)
+function is_chordal(A::SparseMatrixCSC; peo=nothing)
+    if isnothing(peo)
+        peo = maximum_cardinality_search(A)
+    end
     i_peo = invperm(peo)
 
     n = length(peo)
