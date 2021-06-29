@@ -6,18 +6,8 @@ end
 
 
 
-# # Adds PEO to graph
-# # pg 569 of
 # # SIMPLE LINEAR-TIME ALGORITHMS TO TEST CHORDALITY OF GRAPHS, TEST ACYCLICITY OF HYPERGRAPHS, AND SELECTIVELY REDUCE ACYCLIC HYPERGRAPHS
 # # ROBERT E. TARJAN AND MIHALIS YANNAKAKIS
-# # Alg 4.2 of Vandenberghe
-# function perfect_elimination_ordering!(graph::Graph)
-#     # for i = n, ..., 1, σ(i) = argminᵥ |adj(v) ∩ {σ(i+1), ..., σ(n)}|
-#
-#     cache = [Set{Int}[] for _ in 1:length(graph.neighbors)]
-
-
-
 # Algorithm 4.2 in VA
 """
     maximum_cardinality_search(A)
@@ -92,23 +82,3 @@ function is_chordal(A::SparseMatrixCSC; peo=nothing)
     end
     return true
 end
-
-
-#=
-# This implementation is inspired by VA15, chompack
-function is_chordal(A::SparseMatrixCSC)
-    peo = maximum_cardinality_search(A)
-    i_peo = invperm(peo)
-
-    for i in 1:n
-        v = peo[i]
-
-        Ei = Set([k for k in rowvals(A)[nzrange(A, v)] if i_peo[k] > k])
-
-        for k in Ei
-            !(Ei ⊆ rowvals(A)[nzrange(A, v)]) && return false
-        end
-    end
-    return true
-end
-=#
