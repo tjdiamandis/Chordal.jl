@@ -1,6 +1,8 @@
 using ChordalDecomp
 using Test
 
-@testset "ChordalDecomp.jl" begin
-    # Write your tests here.
-end
+using LinearAlgebra, SparseArrays
+using QDLDL
+const CD = ChordalDecomp
+
+include("clique_tree.jl")
