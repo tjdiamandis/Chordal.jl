@@ -1,11 +1,3 @@
-struct CliqueTree
-    par::Vector{Int}
-    child::Vector{Set{Int}}
-    cliques::Vector{Vector{Int}}
-    postordering::Vector{Int}
-end
-
-
 # Input:
 #   L       : sparse lower triangular matrix that rep chordal graph
 #   cliques : vector of cliques

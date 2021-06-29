@@ -5,6 +5,7 @@ using SparseArrays, SuiteSparse, LinearAlgebra
 using DataStructures
 
 
+include("types.jl")
 include("utils.jl")
 include("chordal_decomp.jl")
 include("chordal_extension.jl")
