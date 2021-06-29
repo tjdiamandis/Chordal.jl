@@ -46,4 +46,60 @@ function maxdet_completion(A::SparseMatrixCSC{Tv, Ti}) where {Tv <: AbstractFloa
 
     # Apply inverse permutation
     return W[iperm, iperm]
+
+# Logarithmic Barriers for Sparse Matrix Cones
+# Andersen, Dahl, Vandenberghe
+# Algorithm 4.2
+# NOTE: This is very inefficient -- needs some significant work
+function maxdet_completion_etree(A::SparseMatrixCSC{Tv, Ti}) where {Tv <: AbstractFloat, Ti <: Integer}
+    !issymmetric(A) && error(ArgumentError("A must be symmetric"))
+    n = size(A, 1)
+
+    sp = sparsity_pattern(A)
+    L = get_chordal_extension(sp; perm=nothing, verbose=false)[3]
+    # L[diagind(L)] .= 1
+    etree_par = etree(L)
+    etree_children = get_children_from_par(etree_par)
+    post_ord = get_postordering(etree_par, etree_children)
+
+    L_chol = spzeros(n,n)
+    L_chol[diagind(L_chol)] .= 1
+    D_chol = Diagonal(zeros(n))
+    V = Vector{Matrix{Float64}}(undef, n)
+
+    for i in n:-1:1
+        j = post_ord[i]
+        Ij = rowvals(L)[nzrange(L, j)]
+
+        Vj = (i == n) ? [A[end, end]] : V[j]
+        if i != n
+            L_chol[Ij, j] = (-Vj) \ Vector{Float64}(A[Ij, j])
+            D_chol[j,j] = 1/(A[j,j] + dot(A[Ij, j], L_chol[Ij, j]))
+        else
+            D_chol[j,j] = 1 / A[j,j]
+        end
+
+        for ch in etree_children[j]
+            Ich = rowvals(L)[nzrange(L, ch)]
+
+            nv = length(Ij) + 1
+            tmp = zeros(nv, nv)
+            tmp[1,1] = A[j,j]
+            tmp[2:end, 1] .= A[Ij, j]
+            tmp[1, 2:end] .= A[Ij, j]
+            tmp[2:end, 2:end] .= Vj
+
+            E_Jj_Ich = spzeros(length(Ij) + 1, length(Ich))
+            Jj = vcat([j], Ij)
+            for ii in 1:length(Jj), jj in 1:length(Ich)
+                if Jj[ii] == Ich[jj]
+                    E_Jj_Ich[ii, jj] = 1.0
+                end
+            end
+
+            V[ch] = E_Jj_Ich' * tmp * E_Jj_Ich
+        end
+    end
+
+    return L_chol, D_chol
 end
