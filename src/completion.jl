@@ -103,3 +103,75 @@ function maxdet_completion_etree(A::SparseMatrixCSC{Tv, Ti}) where {Tv <: Abstra
 
     return L_chol, D_chol
 end
+
+
+
+# Logarithmic Barriers for Sparse Matrix Cones
+# Andersen, Dahl, Vandenberghe
+# Algorithm 7.3
+# NOTE: This is very inefficient -- needs some significant work
+function maxdet_completion_factors(A::SparseMatrixCSC{Tv, Ti}) where {Tv <: AbstractFloat, Ti <: Integer}
+    !issymmetric(A) && error(ArgumentError("A must be symmetric"))
+    n = size(A, 1)
+
+    sp = sparsity_pattern(A)
+    L = get_chordal_extension(sp; perm=nothing, verbose=false)[3]
+    etree_par = etree(L)
+    vreps, snd_par, snd_membership = max_supernode_etree(L, etree_par)
+    n_snds = length(vreps)
+    snds = [Vector{Int}(undef, 0) for _ in 1:n_snds]
+    for v in 1:n
+        push!(snds[snd_membership[v]], v)
+    end
+    snd_children = get_children_from_par(snd_par)
+    post_ord = get_postordering(snd_par, snd_children)
+
+
+    L_chol = spzeros(n,n)
+    L_chol[diagind(L_chol)] .= 1
+    D_chol = spzeros(n,n)
+    V = Vector{Matrix{Float64}}(undef, n_snds)
+
+    for i in n_snds:-1:1
+        vrep_ind = post_ord[i]
+        j = vreps[vrep_ind]
+        Jj = vcat([j], rowvals(L)[nzrange(L, j)])
+        Nj = snds[vrep_ind]
+        Aj = filter(x->!(x in Nj), Jj)
+
+        Vj = (i == n_snds) ? [A[end, end]] : V[vrep_ind]
+        if i != n_snds
+            L_chol[Aj, Nj] = pinv(-Vj) * A[Aj, Nj]
+            D_chol[Nj,Nj] = inv(Matrix(A[Nj,Nj] + A[Aj, Nj]'*L_chol[Aj, Nj]))
+        else
+            D_chol[Nj,Nj] = inv(Matrix(A[Nj,Nj]))
+        end
+
+        for ch_ind in snd_children[vrep_ind]
+            Nch = snds[ch_ind]
+            ch = vreps[ch_ind]
+            Jch = vcat([ch], rowvals(L)[nzrange(L, ch)])
+            Ach = filter(x->!(x in Nch), Jch)
+
+            nv = length(Jj)
+            tmp = zeros(nv, nv)
+            len_Nj = length(Nj)
+            len_Aj = length(Aj)
+            tmp[1:len_Nj,1:len_Nj] = A[Nj,Nj]
+            if len_Aj > 0
+                tmp[len_Nj+1:end, 1:len_Nj] .= A[Aj, Nj]
+                tmp[1:len_Nj, len_Nj+1:end] .= A[Aj, Nj]'
+                tmp[len_Nj+1:end, len_Nj+1:end] .= Vj
+            end
+            E_Jj_Ach = spzeros(length(Jj), length(Ach))
+            for ii in 1:length(Jj), jj in 1:length(Ach)
+                if Jj[ii] == Ach[jj]
+                    E_Jj_Ach[ii, jj] = 1.0
+                end
+            end
+            V[ch_ind] = E_Jj_Ach' * tmp * E_Jj_Ach
+        end
+    end
+
+    return L_chol, D_chol
+end
