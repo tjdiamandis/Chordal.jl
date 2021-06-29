@@ -36,3 +36,45 @@ L = qdldl(A; perm=nothing, logical=true).L
     @test all([iperm[i] .< et_par[iperm[i]] for i in 1:17 if et_par[iperm[i]] ≠ 0])
 end
 
+
+@testset "Test Clique Tree" begin
+    deg⁺_true = vec([4 2 3 2 3 2 3 2 2 4 3 4 3 2 2 1 0])
+
+    et_par = CD.etree(L)
+    et_ch = CD.get_children_from_par(et_par)
+    deg⁺ = CD.get_higher_deg(L)
+    @test all(deg⁺_true .== deg⁺)
+
+    vreps, snd_par, snd_mem = CD.max_supernode_etree(L, et_par)
+    # Test vrep (Thm 4.2)
+    for v in vreps
+        @test all([deg⁺[w] < deg⁺[v] + 1 for w in et_ch[v]])
+    end
+    # Test supernodes
+    for (ind, v) in enumerate(vreps)
+        nv = count(x->x==ind, snd_mem) - 1
+        pv = v
+        for k = 1:nv
+            pv = et_par[pv]
+            @test deg⁺[v] == deg⁺[pv] + k
+            @test snd_mem[pv] == ind
+        end
+    end
+    # Test clique tree (Thm 4.3)
+    # Test root
+    root_et = findfirst(x->x==0, et_par)
+    root_ind = findfirst(x->x==0, snd_par)
+    @test snd_mem[root_et] == root_ind
+    for (ind, v) in enumerate(vreps)
+        ind == root_ind && continue
+        col_v = vcat([v], rowvals(L)[nzrange(L, v)])
+        qv = vreps[snd_par[ind]]
+        col_qv = vcat([qv], rowvals(L)[nzrange(L, qv)])
+        col_minus_snd = filter(x->(snd_mem[x] != ind), col_v)
+        # println(" --- v = $v --- ")
+        # @show col_minus_snd
+        # @show col_qv
+        @test issubset(col_minus_snd, col_qv) && length(col_minus_snd) < length(col_qv)
+    end
+
+end
