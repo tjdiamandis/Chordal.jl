@@ -60,7 +60,7 @@ using Random
     M_comp = CD.maxdet_completion(M_)
     @test ≈(M_, sp.*M_comp, atol=1e-6)
 
-    L, D = ChordalDecomp.maxdet_completion_etree(M_)
+    L, D = CD.maxdet_completion_etree(M_)
     W = inv(D) * inv(LowerTriangular(Matrix(L)))
     W = L' \ W
     @test ≈(M_, sp.*W, atol=1e-6)
