@@ -1,3 +1,5 @@
+using LightGraphs: AbstractGraph, adjacency_matrix
+
 struct Graph
     neighbors::Vector{Set{Int}}
     active::BitSet
@@ -12,7 +14,8 @@ end
 """
     maximum_cardinality_search(A)
 Compute the perfect elimination ordering for a chordal graph represented by
-a symmetric sparse matrix `A`.
+a symmetric sparse matrix `A`. This function can also be used with AbstractGraph
+objects from `LightGraphs.jl`.
 """
 function maximum_cardinality_search(A::SparseMatrixCSC)
     !issymmetric(A) && error(ArgumentError("Matrix must be symmetric"))
@@ -23,6 +26,7 @@ function maximum_cardinality_search(A::SparseMatrixCSC)
     _maximum_cardinality_search!(peo, A; n = n, cache=cache)
     return peo
 end
+maximum_cardinality_search(G::AbstractGraph) = maximum_cardinality_search(adjacency_matrix(G))
 
 function _maximum_cardinality_search!(peo, A; n=n, cache=cache)
     v = 1
@@ -46,7 +50,8 @@ end
 """
     is_chordal(A)
 
-Tests if the graph represented by symmetric sparse matrix `A` is chordal.
+Tests if the graph represented by symmetric sparse matrix `A` is chordal. This
+function can also be used with AbstractGraph objects from `LightGraphs.jl`.
 
 References
 * [Simple linear-time algorithms to test chordality of graphs, test acyclicity
@@ -82,3 +87,5 @@ function is_chordal(A::SparseMatrixCSC; peo=nothing)
     end
     return true
 end
+
+is_chordal(G::AbstractGraph; peo=nothing) = is_chordal(adjacency_matrix(G); peo=peo)
