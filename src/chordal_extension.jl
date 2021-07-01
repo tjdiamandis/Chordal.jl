@@ -46,6 +46,8 @@ function get_chordal_extension(sp_pattern::SparseMatrixCSC; perm="amd", verbose=
 	n = size(sp_pattern)[1]
 
 	# Permutations: nothing, amd, vertex separators, TODO: add more options?
+	# See survey Minimal triangulations of graphs: A survey
+	# https://www.sciencedirect.com/science/article/pii/S0012365X05006060
 	if isnothing(perm)
 		p = nothing
 	elseif perm == "amd"
