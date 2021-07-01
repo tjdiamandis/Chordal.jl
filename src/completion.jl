@@ -5,11 +5,7 @@ function maxdet_completion(A::SparseMatrixCSC{Tv, Ti}) where {Tv <: AbstractFloa
     n = size(A, 1)
 
     sp = sparsity_pattern(A)
-    perm, iperm, L = get_chordal_extension(sp)
-    if isnothing(perm)
-        perm = 1:n
-        iperm = 1:n
-    end
+    L = get_chordal_extension(sp; perm=nothing, verbose=false)[3]
     etree_par = etree(L)
     vreps, snd_par, snd_membership = max_supernode_etree(L, etree_par)
     n_snds = length(vreps)
@@ -20,32 +16,57 @@ function maxdet_completion(A::SparseMatrixCSC{Tv, Ti}) where {Tv <: AbstractFloa
     snd_children = get_children_from_par(snd_par)
     post_ord = get_postordering(snd_par, snd_children)
 
+    seps = [Vector{Int}(undef, 0) for _ in 1:n_snds]
+    for (ind, vrep) in enumerate(vreps)
+        seps[ind] = filter(x->!(x in snds[ind]), rowvals(L)[nzrange(L, vrep)])
+    end
 
-    # construct W
-    # W = Matrix{Tv}(undef, n, n)
-    # for col in 1:n, k in nzrange(A, col)
-    #     W[iperm[rowvals(A)[k]], iperm[col]] = nonzeros(A)[k]
-    # end
+    # We have to construct a permutation as in VA section 4.6
+    # st the supernodes have consecutive vertices
+    perm = zeros(Int, n)
+    ind = 1
+    for j in 1:n_snds
+        snd_ind = post_ord[j]
+        snd = snds[snd_ind]
+        len_snd = length(snd)
+        perm[ind:ind+len_snd-1] .= snd
+        snd .= ind:ind+len_snd-1
+        ind += len_snd
+    end
+
+    iperm = invperm(perm)
+    for sep in seps, i in 1:length(sep)
+        sep[i] = iperm[sep[i]]
+    end
+    vreps = first.(snds)
+
+
     W = Matrix(A[perm, perm])
-
-    for j in n_snds-1:-1:1
+    for j in (n_snds-1):-1:1
         vrep_ind = post_ord[j]
         vrep = vreps[vrep_ind]
 
         ν = snds[vrep_ind]
-        col_nz = rowvals(L)[nzrange(L, vrep)]
-        α = filter(x->!(x in ν), col_nz)
-        η = filter(x->!(x in col_nz), vrep+1:n)
+        α = seps[vrep_ind]
+        η = filter(x->(!(x in ν) && !(x in α)), vrep+1:n)
 
         # cache = W_αα^† * W_αν
-        cache = W[α, α] \ W[α, ν]
+        cache = zeros(length(α), length(ν))
+        try
+            cache = W[α, α] \ W[α, ν]
+        catch e
+            # Occasionally get a singular exception. Ignoring for now
+            cache = pinv(W[α, α]) * W[α, ν]
+        end
+        
         # res = W_ηα * cache = W_ηα * W_αα^† * W_αν
         @views mul!(W[η, ν], W[η, α], cache)
-        W[ν, η] .= @view(W[η, ν])'
+        W[ν, η] .= W[η, ν]'
     end
 
-    # Apply inverse permutation
     return W[iperm, iperm]
+end
+
 
 # Logarithmic Barriers for Sparse Matrix Cones
 # Andersen, Dahl, Vandenberghe
