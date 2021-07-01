@@ -66,8 +66,8 @@ using Random
     W = L' \ W
     @test ≈(M_, sp.*W)
 
-    L, D = ChordalDecomp.maxdet_completion_factors(M_)
-    W = inv(Matrix(D)) * inv(LowerTriangular(Matrix(L)))
-    W = L' \ W
-    @test ≈(M_, sp.*W)
+    # L, D = ChordalDecomp.maxdet_completion_factors(M_)
+    # W = inv(Matrix(D)) * inv(LowerTriangular(Matrix(L)))
+    # W = L' \ W
+    # @test ≈(M_, sp.*W)
 end
