@@ -6,48 +6,18 @@ function maxdet_completion(A::SparseMatrixCSC{Tv, Ti}) where {Tv <: AbstractFloa
 
     sp = sparsity_pattern(A)
     L = get_chordal_extension(sp; perm=nothing, verbose=false)[3]
-    etree_par = etree(L)
-    vreps, snd_par, snd_membership = max_supernode_etree(L, etree_par)
-    n_snds = length(vreps)
-    snds = [Vector{Int}(undef, 0) for _ in 1:n_snds]
-    for v in 1:n
-        push!(snds[snd_membership[v]], v)
-    end
-    snd_children = get_children_from_par(snd_par)
-    post_ord = get_postordering(snd_par, snd_children)
+    ct = CliqueTree(L)
+    order_snds!(ct)
 
-    seps = [Vector{Int}(undef, 0) for _ in 1:n_snds]
-    for (ind, vrep) in enumerate(vreps)
-        seps[ind] = filter(x->!(x in snds[ind]), rowvals(L)[nzrange(L, vrep)])
-    end
+    W = Matrix(A[ct.perm, ct.perm])
+    # cache = zeros(maximum(length.(ct.seps)), maximum(length.(ct.snds)))
 
-    # We have to construct a permutation as in VA section 4.6
-    # st the supernodes have consecutive vertices
-    perm = zeros(Int, n)
-    ind = 1
-    for j in 1:n_snds
-        snd_ind = post_ord[j]
-        snd = snds[snd_ind]
-        len_snd = length(snd)
-        perm[ind:ind+len_snd-1] .= snd
-        snd .= ind:ind+len_snd-1
-        ind += len_snd
-    end
+    for j in (length(ct.snds)-1):-1:1
+        vrep_ind = ct.postordering[j]
+        vrep = ct.vreps[vrep_ind]
 
-    iperm = invperm(perm)
-    for sep in seps, i in 1:length(sep)
-        sep[i] = iperm[sep[i]]
-    end
-    vreps = first.(snds)
-
-
-    W = Matrix(A[perm, perm])
-    for j in (n_snds-1):-1:1
-        vrep_ind = post_ord[j]
-        vrep = vreps[vrep_ind]
-
-        ν = snds[vrep_ind]
-        α = seps[vrep_ind]
+        ν = ct.snds[vrep_ind]
+        α = ct.seps[vrep_ind]
         η = filter(x->(!(x in ν) && !(x in α)), vrep+1:n)
 
         # cache = W_αα^† * W_αν
@@ -63,7 +33,7 @@ function maxdet_completion(A::SparseMatrixCSC{Tv, Ti}) where {Tv <: AbstractFloa
         @views mul!(W[η, ν], W[η, α], cache)
         W[ν, η] .= W[η, ν]'
     end
-
+    iperm = invperm(ct.perm)
     return W[iperm, iperm]
 end
 
@@ -72,16 +42,15 @@ end
 # Andersen, Dahl, Vandenberghe
 # Algorithm 4.2
 # NOTE: This is very inefficient -- needs some significant work
+# TODO: Clean up
 function maxdet_completion_etree(A::SparseMatrixCSC{Tv, Ti}) where {Tv <: AbstractFloat, Ti <: Integer}
     !issymmetric(A) && error(ArgumentError("A must be symmetric"))
     n = size(A, 1)
 
     sp = sparsity_pattern(A)
     L = get_chordal_extension(sp; perm=nothing, verbose=false)[3]
-    # L[diagind(L)] .= 1
-    etree_par = etree(L)
-    etree_children = get_children_from_par(etree_par)
-    post_ord = get_postordering(etree_par, etree_children)
+    et = EliminationTree(L; peo=collect(1:n))
+    postordering = get_postordering(et.par, et.child)
 
     L_chol = spzeros(n,n)
     L_chol[diagind(L_chol)] .= 1
@@ -89,7 +58,7 @@ function maxdet_completion_etree(A::SparseMatrixCSC{Tv, Ti}) where {Tv <: Abstra
     V = Vector{Matrix{Float64}}(undef, n)
 
     for i in n:-1:1
-        j = post_ord[i]
+        j = postordering[i]
         Ij = rowvals(L)[nzrange(L, j)]
 
         Vj = (i == n) ? [A[end, end]] : V[j]
@@ -104,7 +73,7 @@ function maxdet_completion_etree(A::SparseMatrixCSC{Tv, Ti}) where {Tv <: Abstra
             D_chol[j,j] = 1 / A[j,j]
         end
 
-        for ch in etree_children[j]
+        for ch in et.child[j]
             Ich = rowvals(L)[nzrange(L, ch)]
 
             nv = length(Ij) + 1
@@ -135,13 +104,14 @@ end
 # Andersen, Dahl, Vandenberghe
 # Algorithm 7.3
 # NOTE: This is very inefficient -- needs some significant work
+# TODO: cleanup
 function maxdet_completion_factors(A::SparseMatrixCSC{Tv, Ti}) where {Tv <: AbstractFloat, Ti <: Integer}
     !issymmetric(A) && error(ArgumentError("A must be symmetric"))
     n = size(A, 1)
 
     sp = sparsity_pattern(A)
     L = get_chordal_extension(sp; perm=nothing, verbose=false)[3]
-    etree_par = etree(L)
+    etree_par = get_etree(L)
     vreps, snd_par, snd_membership = max_supernode_etree(L, etree_par)
     n_snds = length(vreps)
     snds = [Vector{Int}(undef, 0) for _ in 1:n_snds]
@@ -206,13 +176,14 @@ function maxdet_completion_factors(A::SparseMatrixCSC{Tv, Ti}) where {Tv <: Abst
 end
 
 
+# FIXME: errors on higher rank tests
 function minrank_completion(A::SparseMatrixCSC{Tv, Ti}) where {Tv <: AbstractFloat, Ti <: Integer}
     !issymmetric(A) && error(ArgumentError("A must be symmetric"))
     n = size(A, 1)
 
     sp = sparsity_pattern(A)
     _, _, L = get_chordal_extension(sp; perm=nothing)
-    etree_par = etree(L)
+    etree_par = get_etree(L)
     vreps, snd_par, snd_membership = max_supernode_etree(L, etree_par)
     n_snds = length(vreps)
     snds = [Vector{Int}(undef, 0) for _ in 1:n_snds]
@@ -234,9 +205,9 @@ function minrank_completion(A::SparseMatrixCSC{Tv, Ti}) where {Tv <: AbstractFlo
         ν = snds[vrep_ind]
         α = filter(x->!(x in ν), rowvals(L)[nzrange(L, vrep)])
         col_j = vcat(ν, α)
-        @show ν, α
+        # @show ν, α
 
-        dd, VV = eigen(Matrix(@view(A[col_j,col_j])), sortby=x->-real(x))
+        dd, VV = eigen(Symmetric(Matrix(@view(A[col_j,col_j])), :L), sortby=x->-real(x))
         r_ = min(length(dd), r)
         Z = VV[:,1:r_]*Diagonal(sqrt.(max.(real.(dd[1:r_]), 0.0)))
 
@@ -251,8 +222,10 @@ function minrank_completion(A::SparseMatrixCSC{Tv, Ti}) where {Tv <: AbstractFlo
         U = @view(Z[1:length(ν), 1:r_])
         V = @view(Z[length(ν)+1:end, 1:r_])
 
-        # W_Y, Σ_Y, Q_Y = svd(Y[α, :], full=true, alg = LinearAlgebra.QRIteration())
-        # W_V, Σ_V, Q_V = svd(V, full=true, alg = LinearAlgebra.QRIteration())
+        W_Y, Σ_Y, Q_Y = svd(Y[α, :], full=true, alg = LinearAlgebra.QRIteration())
+        W_V, Σ_V, Q_V = svd(V, full=true, alg = LinearAlgebra.QRIteration())
+        svd_err = sum(abs.(Σ_Y .- Σ_V))
+        # @show svd_err
         #
         # Q = Q_V*Q_Y'
         # # @show Y[α, :]
@@ -261,10 +234,22 @@ function minrank_completion(A::SparseMatrixCSC{Tv, Ti}) where {Tv <: AbstractFlo
         #     Q = Q_V*Diagonal(d)*Q_Y'
         # end
         # Q2, Σ, Q1 = svd(V'*Y[α, 1:r_], full=true, alg = LinearAlgebra.QRIteration())
+
         Q2, Σ, Q1 = svd(V'*Y[α, 1:r_], full=true)
         Q = Q2*Q1'
-        Y[ν, 1:r_] .= U*Q
 
+        # @show size(U)
+        # @show size(Y[α, 1:r_])
+
+        # S = svd(Y[α, 1:r_], U)
+        # Q = S.V' * S.U
+        # @show size(S.V)
+        Y[ν, 1:r_] .= U*Q
+        if any(abs.(A[col_j, col_j] .- Y[col_j, 1:r_]*Y[col_j, 1:r_]') .> 1e-3)
+            @show col_j, ν, α
+            display(Y[col_j, :])
+            display(A[col_j, col_j] .- Y[col_j, 1:r_]*Y[col_j, 1:r_]')
+        end
     end
     return Y
 end

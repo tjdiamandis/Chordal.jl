@@ -2,8 +2,9 @@ struct EliminationTree
     par::Vector{Int}
     child::Vector{Vector{Int}}
     peo::Vector{Int}
-    function EliminationTree(L::SparseMatrixCSC, peo::Vector{Int})
-        if !is_chordal(L, 1:n)
+    function EliminationTree(L::SparseMatrixCSC; peo::Vector{Int})
+        n = size(L, 1)
+        if !is_chordal(L; peo=1:n)
             error(ArgumentError("L must be chordal"))
         end
         par = get_etree(L)
@@ -11,7 +12,6 @@ struct EliminationTree
         new(par, child, peo)
     end
 end
-
 
 
 struct CliqueTree
@@ -23,12 +23,15 @@ struct CliqueTree
     seps::Vector{Vector{Int}}
     postordering::Vector{Int}
     perm::Vector{Int}
-    function CliqueTree(L::SparseMatrixCSC, peo::Vector{Int})
+    function CliqueTree(L::SparseMatrixCSC; peo=nothing)
         n = size(L, 1)
-        etree = get_etree(L, peo)
+        if isnothing(peo)
+            peo = collect(1:n)
+        end
+        etree = EliminationTree(L; peo=peo)
         vreps, snd_par, snd_membership = max_supernode_etree(L, etree.par)
         snd_children = get_children_from_par(snd_par)
-        post_ord = get_postordering(snd_par, snd_children)
+        postordering = get_postordering(snd_par, snd_children)
 
         n_snds = length(vreps)
         snds = [Vector{Int}(undef, 0) for _ in 1:n_snds]
@@ -41,18 +44,19 @@ struct CliqueTree
             seps[ind] = filter(x->!(x in snds[ind]), rowvals(L)[nzrange(L, vrep)])
         end
 
-        new(etree, vreps, snd_par, snd_children, snds, seps, postordering, 1:n)
+        new(etree, vreps, snd_par, snd_children, snds, seps, postordering, collect(1:n))
     end
 end
 
 # construct a permutation as in VA section 4.6
 # st the supernodes have consecutive vertices
 function order_snds!(ct::CliqueTree)
+    n = length(ct.perm)
     perm = zeros(Int, n)
     ind = 1
-    for j in 1:n_snds
-        snd_ind = post_ord[j]
-        snd = snds[snd_ind]
+    for j in 1:length(ct.snds)
+        snd_ind = ct.postordering[j]
+        snd = ct.snds[snd_ind]
         len_snd = length(snd)
         perm[ind:ind+len_snd-1] .= snd
         snd .= ind:ind+len_snd-1
@@ -61,10 +65,10 @@ function order_snds!(ct::CliqueTree)
     ct.perm .= perm
 
     iperm = invperm(perm)
-    for sep in seps, i in 1:length(sep)
+    for sep in ct.seps, i in 1:length(sep)
         sep[i] = iperm[sep[i]]
     end
-    ct.vreps .= first.(snds)
+    ct.vreps .= first.(ct.snds)
 end
 
 
