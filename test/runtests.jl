@@ -7,3 +7,4 @@ const CD = ChordalDecomp
 
 include("clique_tree.jl")
 include("clique_graph.jl")
+include("completion.jl")
