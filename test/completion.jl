@@ -58,15 +58,15 @@ using Random
 
     M_ = sparse(sp .* M)
     M_comp = CD.maxdet_completion(M_)
-    @test ≈(M_, sp.*M_comp)
+    @test ≈(M_, sp.*M_comp, atol=1e-6)
 
     L, D = ChordalDecomp.maxdet_completion_etree(M_)
     W = inv(D) * inv(LowerTriangular(Matrix(L)))
     W = L' \ W
-    @test ≈(M_, sp.*W)
+    @test ≈(M_, sp.*W, atol=1e-6)
 
     # L, D = ChordalDecomp.maxdet_completion_factors(M_)
     # W = inv(Matrix(D)) * inv(LowerTriangular(Matrix(L)))
     # W = L' \ W
-    # @test ≈(M_, sp.*W)
+    # @test ≈(M_, sp.*W, atol=1e-6)
 end
