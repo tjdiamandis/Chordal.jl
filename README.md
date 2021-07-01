@@ -24,6 +24,7 @@ These cliques can be further combined (replacing structural zeros with numeric z
 
 ## Additional functionality to include and TODOs
 - [ ] Min rank matrix completion
+- [ ] Utility functions for SDP decomposition with JuMP
 - [ ] Symbolic and numeric cholesky factorization
 - [ ] Allow user-specified weight algorithm for clique graph merging
 - [ ] Euclidean distance matrix completion
@@ -31,8 +32,11 @@ These cliques can be further combined (replacing structural zeros with numeric z
 ## References
 - Lieven Vandenberghe and Martin Andersen's [Chordal Graphs and Semidefinite Optimization](https://www.seas.ucla.edu/~vandenbe/publications/chordalsdp.pdf)
 - Martin Andersen, Joachim Dahl, and Lieven Vandenberghe's [Logarithmic Barriers for Sparse Matrix Cones](https://arxiv.org/abs/1203.2742)
+- Yifan Sun's thesis [Decomposition Methods for Semidefinite optimization](https://escholarship.org/content/qt1cv6981p/qt1cv6981p.pdf)
+- Yifan Sun, Martin S. Andersen, and Lieven Vandenberghe's [Decomposition in conic optimization with partially separable structure](https://arxiv.org/abs/1306.0057)
 - Michael Garstka, Mark Cannon, and Paul Goulart's [A clique graph based merging strategy for decomposable SDPs](https://arxiv.org/abs/1911.05615)
 
+
 ## See also
-- [`COSMO.jl`](https://github.com/oxfordcontrol/COSMO.jl)) is a conic solver that uses chordal decomposition for large PSD constraints.
+- [`COSMO.jl`](https://github.com/oxfordcontrol/COSMO.jl) is a conic solver that uses chordal decomposition for large PSD constraints.
 - [`CHOMPACK.py`](https://github.com/cvxopt/chompack) includes the same algorithms in Python.
