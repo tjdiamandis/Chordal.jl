@@ -58,7 +58,7 @@ function maxdet_completion(A::SparseMatrixCSC{Tv, Ti}) where {Tv <: AbstractFloa
             # Occasionally get a singular exception. Ignoring for now
             cache = pinv(W[α, α]) * W[α, ν]
         end
-        
+
         # res = W_ηα * cache = W_ηα * W_αα^† * W_αν
         @views mul!(W[η, ν], W[η, α], cache)
         W[ν, η] .= W[η, ν]'
@@ -94,7 +94,11 @@ function maxdet_completion_etree(A::SparseMatrixCSC{Tv, Ti}) where {Tv <: Abstra
 
         Vj = (i == n) ? [A[end, end]] : V[j]
         if i != n
-            L_chol[Ij, j] = (-Vj) \ Vector{Float64}(A[Ij, j])
+            try
+                L_chol[Ij, j] = (-Vj) \ Vector{Float64}(A[Ij, j])
+            catch e
+                L_chol[Ij, j] = -pinv(Vj) * Vector{Float64}(A[Ij, j])
+            end
             D_chol[j,j] = 1/(A[j,j] + dot(A[Ij, j], L_chol[Ij, j]))
         else
             D_chol[j,j] = 1 / A[j,j]
@@ -162,7 +166,11 @@ function maxdet_completion_factors(A::SparseMatrixCSC{Tv, Ti}) where {Tv <: Abst
 
         Vj = (i == n_snds) ? [A[end, end]] : V[vrep_ind]
         if i != n_snds
-            L_chol[Aj, Nj] = pinv(-Vj) * A[Aj, Nj]
+            try
+                L_chol[Aj, Nj] = -Vj \ A[Aj, Nj]
+            catch e
+                L_chol[Aj, Nj] = pinv(-Vj) * A[Aj, Nj]
+            end
             D_chol[Nj,Nj] = inv(Matrix(A[Nj,Nj] + A[Aj, Nj]'*L_chol[Aj, Nj]))
         else
             D_chol[Nj,Nj] = inv(Matrix(A[Nj,Nj]))
