@@ -1,68 +1,85 @@
+struct EliminationTree
+    par::Vector{Int}
+    child::Vector{Vector{Int}}
+    peo::Vector{Int}
+    function EliminationTree(L::SparseMatrixCSC, peo::Vector{Int})
+        if !is_chordal(L, 1:n)
+            error(ArgumentError("L must be chordal"))
+        end
+        par = get_etree(L)
+        child = get_children_from_par(par)
+        new(par, child, peo)
+    end
+end
+
+
+
+struct CliqueTree
+    etree::EliminationTree
+    vreps::Vector{Int}
+    snd_par::Vector{Int}
+    snd_child::Vector{Vector{Int}}
+    snds::Vector{Vector{Int}}
+    seps::Vector{Vector{Int}}
+    postordering::Vector{Int}
+    perm::Vector{Int}
+    function CliqueTree(L::SparseMatrixCSC, peo::Vector{Int})
+        n = size(L, 1)
+        etree = get_etree(L, peo)
+        vreps, snd_par, snd_membership = max_supernode_etree(L, etree.par)
+        snd_children = get_children_from_par(snd_par)
+        post_ord = get_postordering(snd_par, snd_children)
+
+        n_snds = length(vreps)
+        snds = [Vector{Int}(undef, 0) for _ in 1:n_snds]
+        for v in 1:n
+            push!(snds[snd_membership[v]], v)
+        end
+
+        seps = [Vector{Int}(undef, 0) for _ in 1:n_snds]
+        for (ind, vrep) in enumerate(vreps)
+            seps[ind] = filter(x->!(x in snds[ind]), rowvals(L)[nzrange(L, vrep)])
+        end
+
+        new(etree, vreps, snd_par, snd_children, snds, seps, postordering, 1:n)
+    end
+end
+
+# construct a permutation as in VA section 4.6
+# st the supernodes have consecutive vertices
+function order_snds!(ct::CliqueTree)
+    perm = zeros(Int, n)
+    ind = 1
+    for j in 1:n_snds
+        snd_ind = post_ord[j]
+        snd = snds[snd_ind]
+        len_snd = length(snd)
+        perm[ind:ind+len_snd-1] .= snd
+        snd .= ind:ind+len_snd-1
+        ind += len_snd
+    end
+    ct.perm .= perm
+
+    iperm = invperm(perm)
+    for sep in seps, i in 1:length(sep)
+        sep[i] = iperm[sep[i]]
+    end
+    ct.vreps .= first.(snds)
+end
+
+
 # Input:
-#   L       : sparse lower triangular matrix that rep chordal graph
-#   cliques : vector of cliques
-function generate_clique_tree(L, cliques)
-    n = size(L, 1)
-    c_int_graph = generate_clique_graph(cliques, n, int_graph=true)
-    edges_tree = max_weight_span_tree(c_int_graph, cliques)
-    root, par, child = det_par_child(L, cliques, edges_tree)
-    postordering = get_postordering(par, child)
-
-    return CliqueTree(par, child, cliques, postordering)
-end
-
-
-function max_weight_span_tree(cg::CliqueGraph, cliques)
-    m = length(cg)
-    edges_tree = spzeros(Int, m, m)
-
-    cliques_added = [argmax([length(c) for c in cliques])]
-    cliques_to_add = collect(1:m)
-    deleteat!(cliques_to_add, cliques_added[1])
-
-    @views for r in 1:m-1
-        max_int_ind = argmax(cg.edge_mat[cliques_added, cliques_to_add])
-        C = cliques_added[max_int_ind[1]]
-        C_new = cliques_to_add[max_int_ind[2]]
-
-        edges_tree[C, C_new] = edges_tree[C_new, C] = 1
-        append!(cliques_added, C_new)
-        deleteat!(cliques_to_add, max_int_ind[2])
+#   L : sparse lower triangular matrix that rep chordal graph
+function generate_clique_tree(A::SparseMatrixCSC{Tv, Ti}) where {Tv <: AbstractFloat, Ti <: Integer}
+    size(A, 1) != size(A, 2) && error(ArgumentError("A must be square"))
+    if !is_chordal(A)
+        error(ArgumentError("Matrix must be chordal"))
     end
+    peo = !is_chordal(A; peo=1:n) ? collect(1:n) : maximum_cardinality_search(A)
+    # NOTE: this sets the diagonal equal to 0
+    L = tril(A[peo, peo], -1)
 
-    return edges_tree
-end
-
-
-# Determine the parent-child structure of the tree
-function det_par_child(L, cliques, edges_tree)
-    root_vert = argmax(vec(sum(L, dims=1)))
-    root = findfirst(x -> root_vert in x, cliques)
-
-    par = zeros(Int, size(edges_tree, 1))
-    child = [Set{Int}() for _ in 1:length(par)]
-    par[root] = 0
-
-    det_children!(par, child, root, edges_tree)
-
-    return root, par, child
-end
-
-
-# Traverses tree to fill parent and child data structures
-function det_children!(par, child, node, edges_tree)
-    children = filter(x->(x != par[node]), findnz(edges_tree[:,node])[1])
-
-    if isempty(children)
-        return nothing
-    end
-
-    child[node] = Set(children)
-    for c in children
-        par[c] = node
-        det_children!(par, child, c, edges_tree)
-    end
-    return nothing
+    return CliqueTree(L, peo)
 end
 
 
@@ -88,16 +105,18 @@ end
 
 
 """
-    etree(A)
-Compute the elimination tree of a lower triangular sparse matrix `L`
+    get_etree(A)
+Compute the parent function of the elimination tree of a symmetric sparse matrix `A`
 """
-function etree(L::SparseMatrixCSC{Tv, Ti}) where {Tv <: AbstractFloat, Ti <: Integer}
-    n = size(L, 1)
+function get_etree(A::SparseMatrixCSC{Tv, Ti}) where {Tv <: AbstractFloat, Ti <: Integer}
+    (!istril(A) && !issymmetric(A)) && error(ArgumentError("A must be symmetric or lower triangular"))
+    n = size(A, 1)
     par = zeros(Ti, n)
     ancestor = zeros(Ti, n)
 
-    _etree(sparse(L'), par, ancestor)
-    count(x->x==0, par) > 1 && error(ArgumentError("L must be connected"))
+    U = istril(A) ? sparse(A') : A
+    _etree(U, par, ancestor)
+    count(x->x==0, par) > 1 && error(ArgumentError("A must be connected"))
     return par
 end
 
@@ -181,11 +200,15 @@ function max_supernode_etree(L::SparseMatrixCSC, etree_par::Vector{Int})
 end
 
 
-# input: parent vector
+# input: parent vector for tree
 # returns vector v st v[i] = {k | k is a child of i}
+"""
+    get_children_from_par(par)
+Compute the children of each vertex `v` in a tree specified by `par`
+"""
 function get_children_from_par(par::Vector{Int})
     n = length(par)
-    children = [Set{Int}() for _ in 1:n]
+    children = [Vector{Int}(undef, 0) for _ in 1:n]
 
     for i in 1:n
         par_i = par[i]
@@ -198,7 +221,7 @@ function get_children_from_par(par::Vector{Int})
 end
 
 
-# NOTE: Assumes that L has order σ = 1:n & is lower triangular
+# NOTE: Assumes that L has order σ = 1:n & is lower triangular w zeros on diagonal
 function get_higher_deg(L::SparseMatrixCSC)
     n = size(L, 1)
     deg⁺ = zeros(Int, n)

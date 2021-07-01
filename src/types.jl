@@ -4,10 +4,3 @@ struct CliqueGraph
     # TODO: change to bitset?
     active_cliques::Set{Int}
 end
-
-struct CliqueTree
-    par::Vector{Int}
-    child::Vector{Set{Int}}
-    cliques::Vector{Vector{Int}}
-    postordering::Vector{Int}
-end

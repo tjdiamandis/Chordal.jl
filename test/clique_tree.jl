@@ -27,7 +27,7 @@ L = qdldl(A; perm=nothing, logical=true).L
     ch_true[16] = Set([15, 14])
     ch_true[17] = Set([16])
 
-    et_par = CD.etree(L)
+    et_par = CD.get_etree(L)
     @test all(et_par .== par_true)
     et_ch = CD.get_children_from_par(et_par)
     @test all([issetequal(et_ch[i], ch_true[i]) for i in 1:n])
@@ -40,7 +40,7 @@ end
 @testset "Test Clique Tree" begin
     deg⁺_true = vec([4 2 3 2 3 2 3 2 2 4 3 4 3 2 2 1 0])
 
-    et_par = CD.etree(L)
+    et_par = CD.get_etree(L)
     et_ch = CD.get_children_from_par(et_par)
     deg⁺ = CD.get_higher_deg(L)
     @test all(deg⁺_true .== deg⁺)
