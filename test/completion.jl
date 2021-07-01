@@ -1,4 +1,3 @@
-using Convex, MosekTools
 using Random
 
 @testset "Max det completion" begin
