@@ -24,7 +24,7 @@ nonzero_inds = vcat([
     ],
     [(i,i) for i in 1:n]
 )
-sp = sparse(CD.unzip(nonzero_inds)..., [10i+j for (i, j) in nonzero_inds])
+sp = sparse(CD.unzip(nonzero_inds)..., [1.0i+j for (i, j) in nonzero_inds])
 sp = sp + tril(sp, -1)'
 
 
