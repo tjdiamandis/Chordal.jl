@@ -175,3 +175,67 @@ function maxdet_completion_factors(A::SparseMatrixCSC{Tv, Ti}) where {Tv <: Abst
 
     return L_chol, D_chol
 end
+
+
+function minrank_completion(A::SparseMatrixCSC{Tv, Ti}) where {Tv <: AbstractFloat, Ti <: Integer}
+    !issymmetric(A) && error(ArgumentError("A must be symmetric"))
+    n = size(A, 1)
+
+    sp = sparsity_pattern(A)
+    _, _, L = get_chordal_extension(sp; perm=nothing)
+    etree_par = etree(L)
+    vreps, snd_par, snd_membership = max_supernode_etree(L, etree_par)
+    n_snds = length(vreps)
+    snds = [Vector{Int}(undef, 0) for _ in 1:n_snds]
+    for v in 1:n
+        push!(snds[snd_membership[v]], v)
+    end
+    snd_children = get_children_from_par(snd_par)
+    post_ord = get_postordering(snd_par, snd_children)
+
+    # Determine rank
+    r = maximum([rank(Matrix(A[c,c]), rtol=1e-10) for c in get_cliques(L)])
+
+    Y = zeros(n, r)
+    for j in n_snds:-1:1
+        vrep_ind = post_ord[j]
+        vrep = vreps[vrep_ind]
+
+        # col_j = vcat([vrep], rowvals(L)[nzrange(L, vrep)])
+        ν = snds[vrep_ind]
+        α = filter(x->!(x in ν), rowvals(L)[nzrange(L, vrep)])
+        col_j = vcat(ν, α)
+        @show ν, α
+
+        dd, VV = eigen(Matrix(@view(A[col_j,col_j])), sortby=x->-real(x))
+        r_ = min(length(dd), r)
+        Z = VV[:,1:r_]*Diagonal(sqrt.(max.(real.(dd[1:r_]), 0.0)))
+
+
+        if j == n_snds
+            Y[ν, 1:r_] .= Z[1:length(ν), :]
+            continue
+        end
+
+
+
+        U = @view(Z[1:length(ν), 1:r_])
+        V = @view(Z[length(ν)+1:end, 1:r_])
+
+        # W_Y, Σ_Y, Q_Y = svd(Y[α, :], full=true, alg = LinearAlgebra.QRIteration())
+        # W_V, Σ_V, Q_V = svd(V, full=true, alg = LinearAlgebra.QRIteration())
+        #
+        # Q = Q_V*Q_Y'
+        # # @show Y[α, :]
+        # if !all(Y[α, :] .≈ V*Q)
+        #     d = sign.((Y[α, :]*Q_Y)[1,:]) .* sign.((V*Q_V)[1,:])
+        #     Q = Q_V*Diagonal(d)*Q_Y'
+        # end
+        # Q2, Σ, Q1 = svd(V'*Y[α, 1:r_], full=true, alg = LinearAlgebra.QRIteration())
+        Q2, Σ, Q1 = svd(V'*Y[α, 1:r_], full=true)
+        Q = Q2*Q1'
+        Y[ν, 1:r_] .= U*Q
+
+    end
+    return Y
+end
