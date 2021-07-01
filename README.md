@@ -1,7 +1,7 @@
 # ChordalDecomp
 
 [![Build Status](https://github.com/tjdiamandis/ChordalDecomp.jl/workflows/CI/badge.svg)](https://github.com/tjdiamandis/ChordalDecomp.jl/actions)
-[![Coverage](https://codecov.io/gh/tjdiamandis/ChordalDecomp.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/tjdiamandis/ChordalDecomp.jl)
+[![codecov](https://codecov.io/gh/tjdiamandis/Chordal.jl/branch/main/graph/badge.svg?token=ZPW6OXSD9A)](https://codecov.io/gh/tjdiamandis/Chordal.jl)
 
 #### NOTE: This package is very much a work in progress. Feature requests welcome! Documentation forthcoming.
 
