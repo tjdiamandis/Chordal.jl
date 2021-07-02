@@ -76,6 +76,18 @@ function get_sparsity_pattern_from_cliques(cliques)
 end
 
 
+function reconstruct_from_sparse_varref(Zref, n)
+    Zcv = value.(Zref)
+    Z_uncomp = spzeros(Float64, n, n)
+    for ind in eachindex(Zcv)
+        Z_uncomp[ind[1], ind[2]] = Zcv[ind]
+    end
+    return Z_uncomp
+end
+
+
+
+
 #FIXME
 function build_constraints_standard!(
         model::JuMP.Model,
