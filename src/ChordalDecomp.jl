@@ -2,6 +2,7 @@
 module ChordalDecomp
 
 using SparseArrays, SuiteSparse, LinearAlgebra
+using JuMP
 using DataStructures
 
 
@@ -13,10 +14,12 @@ include("chordal_graph.jl")
 include("clique_graph.jl")
 include("clique_tree.jl")
 include("completion.jl")
+include("jump.jl")
 
 export sparsity_pattern, get_chordal_extension
 export generate_clique_graph, merge_cliques!, get_cliques
 export get_selectors, make_selectors_from_cliques, make_selectors_from_clique_graph
-export generate_random_sdp
+export maxdet_completion
+export build_constraints_lmi!
 
 end
