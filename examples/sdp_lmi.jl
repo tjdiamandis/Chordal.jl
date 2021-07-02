@@ -52,30 +52,8 @@ time_chordal = @elapsed optimize!(m2)
 yv = value.(y)
 pstar_chordal = dot(c,yv)
 
-@info "termination status: $(termination_status(m))"
-@info "solution status: $(primal_status(m))"
+@info "termination status: $(termination_status(m2))"
+@info "solution status: $(primal_status(m2))"
 @info "difference with non-chordal: $(norm(yv - xv))"
 @info "difference with true variable: $(norm(yv - xstar))"
 @info "Time with chordal is $(round(time_chordal, digits=3))s vs $(round(time_non_chordal, digits=3))s"
-
-
-# ------------------------------------------------------
-# ------------------ Standard Form SDP -----------------
-# ------------------------------------------------------
-## Without decomposition
-m3 = Model(optimizer)
-sparse(@variable(m3, X[1:n, 1:n] in PSDCone()))
-for i in 1:n
-    @constraint(m3, sum(F[i] .* X) - c[i] == 0)
-end
-@objective(m3, Max, -sum(G .* X))
-time_non_chordal = @elapsed optimize!(m3)
-
-Xv = value.(X)
-pstar = -sum(G .* Xv)
-@info "termination status: $(termination_status(m))"
-@info "solution status: $(primal_status(m))"
-@info "Optimal value: $pstar"
-
-
-## With Decomposition
