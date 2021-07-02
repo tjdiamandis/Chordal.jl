@@ -1,6 +1,8 @@
 using Random
 using LightGraphs: SimpleGraph, is_connected
 
+# TODO: this should probably be a concrete type <: AbstractMatrix that operates
+# as an indexer
 function build_perm_matrix(p)
     isnothing(p) && return I
     n = length(p)
@@ -24,7 +26,7 @@ function generate_random_sdp(n; rand_seed=0)
     Random.seed!(rand_seed)
 
     D = diagm(1 .+ rand(n))
-    F = Vector{SparseMatrixCSC{Float64}}(undef, n)
+    F = Vector{SparseMatrixCSC{Float64, Int}}(undef, n)
     c = Vector{Float64}(undef, n)
     for i in 1:n
         F[i] = spzeros(n, n)
