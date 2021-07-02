@@ -236,3 +236,9 @@ function get_higher_deg(L::SparseMatrixCSC)
 
     return deg⁺
 end
+
+
+# TODO: Iterator for cliques
+function get_cliques(ct::CliqueTree)
+    return [vcat(ct.snds[i], ct.seps[i]) for i in 1:length(ct.snds)]
+end
