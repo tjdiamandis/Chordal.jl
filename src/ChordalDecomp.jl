@@ -20,6 +20,6 @@ export sparsity_pattern, get_chordal_extension
 export generate_clique_graph, merge_cliques!, get_cliques
 export get_selectors, make_selectors_from_cliques, make_selectors_from_clique_graph
 export maxdet_completion
-export build_constraints_lmi!
+export build_constraints_lmi!, get_sparsity_pattern_from_cliques
 
 end
