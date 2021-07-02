@@ -35,6 +35,9 @@ function sparsity_pattern(mats::AbstractVector{SparseMatrixCSC{T,S}}) where {T, 
 		end
 	end
 
+	# Always assume diagonal can be nonzero
+	ret[diagind(ret)] .= 1
+
     return ret
 end
 sparsity_pattern(mat::SparseMatrixCSC) = sparsity_pattern([mat])
