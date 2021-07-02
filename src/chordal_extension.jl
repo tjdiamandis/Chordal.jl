@@ -19,7 +19,7 @@ end
 
 
 # Returns 0/1 sparsity pattern of a set of matrices
-function sparsity_pattern(mats::AbstractVector{SparseMatrixCSC{T,S}}) where {T <: Number, S <: Integer}
+function sparsity_pattern(mats::AbstractVector{SparseMatrixCSC{T,S}}) where {T, S <: Integer}
 	n = size(mats[1], 1)
 	for mat in mats
 		!(n == size(mat, 1) && issymmetric(mat)) && error(ArgumentError(
