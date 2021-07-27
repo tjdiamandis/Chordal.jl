@@ -6,6 +6,11 @@ end
 
 
 # A + S ∈ PSDCone(), where S ⪰ 0
+"""
+    build_constraints_lmi!(m::JuMP.Model, A::SparseMatrixCSC{JuMP.AffExpr, Int}; verbose=false)
+
+Adds the constraint `A + S ∈ PSDCone()`, where `S ⪰ 0` to JuMP model `m`
+"""
 function build_constraints_lmi!(m::JuMP.Model, A::SparseMatrixCSC{JuMP.AffExpr, Int}; verbose=false)
     perm, iperm, Tls = get_selectors(A; verbose=verbose, ret_cliques=false)
     num_cliques = length(Tls)
@@ -24,6 +29,12 @@ function build_constraints_lmi!(m::JuMP.Model, A::SparseMatrixCSC{JuMP.AffExpr, 
     end
 end
 
+
+"""
+    build_constraints_lmi!(m::JuMP.Model, A::SparseMatrixCSC{JuMP.AffExpr, Int}; verbose=false)
+
+Adds the constraint `F_1 y_1 + F_2 y_2 + ... + F_n y_n + G ∈ PSDCone()` to JuMP model `m`
+"""
 function build_constraints_lmi!(
         m::JuMP.Model,
         y::Vector{VariableRef},
@@ -36,6 +47,11 @@ end
 
 
 # A = F_1 y_1 + F_2 y_2 + ... + F_n y_n + G
+"""
+    build_A(y::Vector{JuMP.VariableRef}, F::AbstractVector{SparseMatrixCSC{T, S}}, G::SparseMatrixCSC{T, S}) where {T <: Number, S <: Integer}
+
+Builds a JuMP.GenericAffExpr `A = F_1 y_1 + F_2 y_2 + ... + F_n y_n + G`.
+"""
 function build_A(y::Vector{JuMP.VariableRef}, F::AbstractVector{SparseMatrixCSC{T, S}}, G::SparseMatrixCSC{T, S}) where {T <: Number, S <: Integer}
     n = length(y)
     A = spzeros(GenericAffExpr{Float64, VariableRef}, n, n)
@@ -62,6 +78,11 @@ function build_A(y::Vector{JuMP.VariableRef}, F::AbstractVector{SparseMatrixCSC{
 end
 
 
+"""
+    get_sparsity_pattern_from_cliques(cliques)
+
+Returns a sparse matrix `sp` corresponding to the graph with maximal cliques `cliques`
+"""
 function get_sparsity_pattern_from_cliques(cliques)
     n = maximum(maximum.(cliques))
 
@@ -76,6 +97,12 @@ function get_sparsity_pattern_from_cliques(cliques)
 end
 
 
+"""
+    reconstruct_from_sparse_varref(Zref, n)
+
+Gets the value of JuMP.Containers.SparseAxisArray `Zref` and returns the result
+as a SparseMatrixCSC
+"""
 function reconstruct_from_sparse_varref(Zref, n)
     Zcv = value.(Zref)
     Z_uncomp = spzeros(Float64, n, n)
@@ -84,8 +111,6 @@ function reconstruct_from_sparse_varref(Zref, n)
     end
     return Z_uncomp
 end
-
-
 
 
 #FIXME

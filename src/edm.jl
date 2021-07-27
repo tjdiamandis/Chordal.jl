@@ -61,12 +61,19 @@ function edm_completion(A::SparseMatrixCSC{Tv, Ti}) where {Tv <: AbstractFloat, 
         # BLAS.ger!(1.0, ones(length(η)), diag(Yνν), W[η, ν])
         # BLAS.ger!(1.0, diag(Yηη), ones(length(ν)), W[η, ν])
 
+        # μ = sparsevec([aj], [1.0], n)
+        # tmp  = -0.5*(I - ones(n)*μ')*W*(I - μ*ones(n)')
+        # rtol = sqrt(eps(real(float(one(eltype(tmp[α, α]))))))
+        # W[η, ν] .= -2*tmp[η, α]*pinv(tmp[α, α]; rtol=rtol)*tmp[α, ν] +
+        #           ones(length(η))*diag(tmp[ν,ν])' + diag(tmp[η,η])*ones(length(ν))'
+
+
         W[ν, η] .= W[η, ν]'
-        display(Matrix(W[iperm, iperm] .* .!(sp .> 0)))
-        break
+        # display(Matrix(W[iperm, iperm] .* .!(sp .> 0)))
+        # break
     end
 
-    return nothing #W[iperm, iperm]
+    return W[iperm, iperm]
 
 end
 

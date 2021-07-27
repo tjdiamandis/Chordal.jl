@@ -12,6 +12,16 @@ length(cg::CliqueGraph) = size(cg.edge_mat, 1)
 #   n       : num nodes of graph
 # Output:
 #   CliqueGraph : rep of relationship bt cliques
+"""
+    generate_clique_graph(cliques, n::Integer)
+
+Generates CliqueGraph datastructure for an undirected graph from `cliques` and
+the number of nodes `n`.
+
+Reference
+* [A clique graph based merging strategy for decomposable SDPs](https://arxiv.org/pdf/1911.05615)
+by Michael Garstka, Mark Cannon, Paul Goulart
+"""
 function generate_clique_graph(cliques, n::Integer)
     m = length(cliques)
     membership_mat = spzeros(Bool, n, m)
@@ -39,6 +49,16 @@ end
 
 
 # TODO: this should be a user-defined function
+"""
+    weight_function(ci, cj)
+
+Defines the weight function used to determine if cliques `ci` and `cj` should be
+merged. Cliques are merged if this is positive.
+
+Reference
+* [A clique graph based merging strategy for decomposable SDPs](https://arxiv.org/pdf/1911.05615)
+by Michael Garstka, Mark Cannon, Paul Goulart
+"""
 function weight_function(ci, cj)
     l_ci = sum(ci)
     l_cj = sum(cj)
@@ -86,6 +106,16 @@ function _merge_cliques!(cg::CliqueGraph, i::Integer, j::Integer)
 end
 
 
+"""
+    merge_cliques!(cg::CliqueGraph; verbose=false)
+
+Merges cliques in `cg` in a greedy fashion starting with the pair with the largest
+`weight_function`. Stops when all pairs of cliques have a non-positive weight.
+
+Reference
+* [A clique graph based merging strategy for decomposable SDPs](https://arxiv.org/pdf/1911.05615)
+by Michael Garstka, Mark Cannon, Paul Goulart
+"""
 function merge_cliques!(cg::CliqueGraph; verbose=false)
     # nodes X cliques
     n, m = size(cg.membership_mat)
@@ -110,6 +140,11 @@ function merge_cliques!(cg::CliqueGraph; verbose=false)
 end
 
 
+"""
+    get_cliques(cg::CliqueGraph)
+
+Returns a list of the cliques in CliqueGraph `cg`.
+"""
 function get_cliques(cg::CliqueGraph)
     return [findnz(cg.membership_mat[:,i])[1] for i in sort(collect(cg.active_cliques))]
 end

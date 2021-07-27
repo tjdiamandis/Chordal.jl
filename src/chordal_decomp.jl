@@ -1,3 +1,11 @@
+"""
+    make_selectors_from_cliques(cliques, n)
+
+Builds selector matrices `Tℓ` from `cliques`, a list of the cliques in a graph
+with `n` vertices.
+
+`Tℓ*X*Tℓ'` is the submatrix of `X` corresponding to clique `ℓ`.
+"""
 function make_selectors_from_cliques(cliques, n)
     selector_mats = [spzeros(length(cliques[i]), n) for i in 1:length(cliques)]
     for i in 1:length(cliques)
@@ -12,7 +20,16 @@ end
 
 
 # TODO: make this multithreaded
+# TODO: remove n from args
+"""
+    make_selectors_from_clique_graph(cg::CliqueGraph, n)
+
+Builds selector matrices `Tℓ` from `cg`, a CliqueGraph with `n` vertices.
+
+`Tℓ*X*Tℓ'` is the submatrix of `X` corresponding to clique `ℓ`.
+"""
 function make_selectors_from_clique_graph(cg::CliqueGraph, n)
+    # n = size(cg.membership_mat, 1)
     m = length(cg.active_cliques)
     selector_mats = Vector{SparseMatrixCSC}(undef, m)
     for (i, cnum) in enumerate(cg.active_cliques)
@@ -30,6 +47,13 @@ function make_selectors_from_clique_graph(cg::CliqueGraph, n)
 end
 
 
+"""
+    get_selectors(input_mat::SparseMatrixCSC; verbose=true, ret_cliques=true)
+
+Returns the (merged) cliques of the graph corresponding to the sparsity pattern
+of `input_mat` (after a permutation to reduce fill-in) and optionally the cliques.
+Also returns the fill-reducing permutation and and inverse permutation used.
+"""
 function get_selectors(input_mat::SparseMatrixCSC; verbose=true, ret_cliques=true)
     n = size(input_mat)[1]
     preprocess!(input_mat)

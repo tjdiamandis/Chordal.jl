@@ -13,6 +13,7 @@ end
 # Algorithm 4.2 in VA
 """
     maximum_cardinality_search(A)
+
 Compute the perfect elimination ordering for a chordal graph represented by
 a symmetric sparse matrix `A`. This function can also be used with AbstractGraph
 objects from `LightGraphs.jl`.

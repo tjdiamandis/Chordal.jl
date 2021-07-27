@@ -1,5 +1,15 @@
 
 # VA Algorithm 10.2, pg 362
+"""
+    maxdet_completion(A::SparseMatrixCSC{Tv, Ti}) where {Tv <: AbstractFloat, Ti <: Integer}
+
+Returns the maximum determinant completion of chordal sparse matrix `A` using
+Algorithm 10.2 in [VA15].
+
+#Reference
+[VA15] [Chordal Graphs and Semidefinite Optimization](https://www.seas.ucla.edu/~vandenbe/publications/chordalsdp.pdf)
+by Lieven Vandenberghe and Martin Andersen
+"""
 function maxdet_completion(A::SparseMatrixCSC{Tv, Ti}) where {Tv <: AbstractFloat, Ti <: Integer}
     !issymmetric(A) && error(ArgumentError("A must be symmetric"))
     n = size(A, 1)
@@ -43,6 +53,17 @@ end
 # Algorithm 4.2
 # NOTE: This is very inefficient -- needs some significant work
 # TODO: Clean up
+"""
+    maxdet_completion_etree(A::SparseMatrixCSC{Tv, Ti}) where {Tv <: AbstractFloat, Ti <: Integer}
+
+Returns the cholesky factors of the inverse of the maximum determinant completion
+of chordal sparse matrix `A` using Algorithm 4.2 in [ADV14]. This algorithm uses
+the elimination tree of `A` and, therefore, BLAS level 2 operations.
+
+#Reference
+[ADV12] [Logarithmic barriers for sparse matrix cones](https://arxiv.org/abs/1203.2742)
+by Martin S. Andersen, Joachim Dahl, Lieven Vandenberghe
+"""
 function maxdet_completion_etree(A::SparseMatrixCSC{Tv, Ti}) where {Tv <: AbstractFloat, Ti <: Integer}
     !issymmetric(A) && error(ArgumentError("A must be symmetric"))
     n = size(A, 1)
@@ -105,6 +126,17 @@ end
 # Algorithm 7.3
 # NOTE: This is very inefficient -- needs some significant work
 # TODO: cleanup
+"""
+    maxdet_completion_etree(A::SparseMatrixCSC{Tv, Ti}) where {Tv <: AbstractFloat, Ti <: Integer}
+
+Returns the cholesky factors of the inverse of the maximum determinant completion
+of chordal sparse matrix `A` using Algorithm 7.3 in [ADV14]. This algorithm uses
+the supernodal elimination tree of `A` and, therefore, BLAS level 3 operations.
+
+#Reference
+[ADV12] [Logarithmic barriers for sparse matrix cones](https://arxiv.org/abs/1203.2742)
+by Martin S. Andersen, Joachim Dahl, Lieven Vandenberghe
+"""
 function maxdet_completion_factors(A::SparseMatrixCSC{Tv, Ti}) where {Tv <: AbstractFloat, Ti <: Integer}
     !issymmetric(A) && error(ArgumentError("A must be symmetric"))
     n = size(A, 1)

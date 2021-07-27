@@ -48,8 +48,20 @@ struct CliqueTree
     end
 end
 
+
 # construct a permutation as in VA section 4.6
 # st the supernodes have consecutive vertices
+"""
+    order_snds!(ct::CliqueTree)
+
+Orders supernodes such that elements of each supernode are numbered consecutively
+and the order is a topological ordering of the reprsentative vertices in the
+supernodal elimination tree. (See [VA15, 4.6])
+
+#Reference
+[VA15] [Chordal Graphs and Semidefinite Optimization](https://www.seas.ucla.edu/~vandenbe/publications/chordalsdp.pdf)
+by Lieven Vandenberghe and Martin Andersen
+"""
 function order_snds!(ct::CliqueTree)
     n = length(ct.perm)
     perm = zeros(Int, n)
@@ -72,8 +84,15 @@ function order_snds!(ct::CliqueTree)
 end
 
 
-# Input:
-#   L : sparse lower triangular matrix that rep chordal graph
+"""
+    generate_clique_tree(A::SparseMatrixCSC{Tv, Ti}) where {Tv <: AbstractFloat, Ti <: Integer}
+
+Generates a CliqueTree from chordally sparse matrix `A`.
+
+#Reference
+[VA15] [Chordal Graphs and Semidefinite Optimization](https://www.seas.ucla.edu/~vandenbe/publications/chordalsdp.pdf)
+by Lieven Vandenberghe and Martin Andersen
+"""
 function generate_clique_tree(A::SparseMatrixCSC{Tv, Ti}) where {Tv <: AbstractFloat, Ti <: Integer}
     size(A, 1) != size(A, 2) && error(ArgumentError("A must be square"))
     if !is_chordal(A)
@@ -87,6 +106,12 @@ function generate_clique_tree(A::SparseMatrixCSC{Tv, Ti}) where {Tv <: AbstractF
 end
 
 
+"""
+    get_postordering(par, child)
+
+Gets a postordering of the tree represented by vector of parents `par` and vector
+of children `child`.
+"""
 function get_postordering(par, child)
     n = length(par)
     root = findfirst(x->par[x] == 0, 1:n)
@@ -110,6 +135,7 @@ end
 
 """
     get_etree(A)
+
 Compute the parent function of the elimination tree of a symmetric sparse matrix `A`
 """
 function get_etree(A::SparseMatrixCSC{Tv, Ti}) where {Tv <: AbstractFloat, Ti <: Integer}
@@ -147,6 +173,23 @@ end
 
 # Algorithm from Pothen and Sun
 #   restated in VA, Algorithm 4.1
+"""
+    max_supernode_etree(L::SparseMatrixCSC, etree_par::Vector{Int})
+
+Constructs the supernodal elimination tree of the chordal graph represented by
+lower triangular matrix `L` and with elimination tree `etree_par`. Returns the
+reprsentation vertices, the supernodal elimination tree, and a supernode memership
+indicator.
+
+Implemented using [VA15, Algorithm 4.1], which was originally formulated by [PS89].
+
+#References
+[PS89] [Compact clique tree data structures in sparse matrix factorizations](https://minds.wisconsin.edu/bitstream/handle/1793/59224/TR897.pdf?sequence=1&isAllowed=y)
+by Alex Pothen and Chunguang Sun
+
+[VA15] [Chordal Graphs and Semidefinite Optimization](https://www.seas.ucla.edu/~vandenbe/publications/chordalsdp.pdf)
+by Lieven Vandenberghe and Martin Andersen
+"""
 function max_supernode_etree(L::SparseMatrixCSC, etree_par::Vector{Int})
     n = size(L, 1)
     etree_children = get_children_from_par(etree_par)
@@ -208,6 +251,7 @@ end
 # returns vector v st v[i] = {k | k is a child of i}
 """
     get_children_from_par(par)
+
 Compute the children of each vertex `v` in a tree specified by `par`
 """
 function get_children_from_par(par::Vector{Int})
@@ -226,6 +270,14 @@ end
 
 
 # NOTE: Assumes that L has order σ = 1:n & is lower triangular w zeros on diagonal
+"""
+    get_higher_deg(L::SparseMatrixCSC)
+
+Returns the higher degrees of each node in the graph represented by lower triangular
+matrix `L`.
+
+NOTE: the algorithm assums that `L` has order `σ = 1:n` and zeros on the diagonal.
+"""
 function get_higher_deg(L::SparseMatrixCSC)
     n = size(L, 1)
     deg⁺ = zeros(Int, n)
@@ -239,6 +291,11 @@ end
 
 
 # TODO: Iterator for cliques
+"""
+    get_cliques(ct::CliqueTree)
+
+Returns the cliques in the graph represented by CliqueTree `ct`.
+"""
 function get_cliques(ct::CliqueTree)
     return [vcat(ct.snds[i], ct.seps[i]) for i in 1:length(ct.snds)]
 end
