@@ -54,10 +54,8 @@ end
 Tests if the graph represented by symmetric sparse matrix `A` is chordal. This
 function can also be used with AbstractGraph objects from `LightGraphs.jl`.
 
-References
-* [Simple linear-time algorithms to test chordality of graphs, test acyclicity
-of hypergraphs, and selectively reduce acyclic hypergraphs](https://epubs.siam.org/doi/pdf/10.1137/0213035?casa_token=A22jkwrsrL0AAAAA:rx-G6F21ubTkMiJmRTH3IKqxmFTo_IVWDDZfJig5lsZxnQtNH2vUKWfZ3eZJKUv9CiKbIPt1VQs)
-by Robert Tarjan and Mihalis Yannakakis
+# References
+* [Simple linear-time algorithms to test chordality of graphs, test acyclicity of hypergraphs, and selectively reduce acyclic hypergraphs](https://epubs.siam.org/doi/pdf/10.1137/0213035?casa_token=A22jkwrsrL0AAAAA:rx-G6F21ubTkMiJmRTH3IKqxmFTo_IVWDDZfJig5lsZxnQtNH2vUKWfZ3eZJKUv9CiKbIPt1VQs) by Robert Tarjan and Mihalis Yannakakis
 """
 function is_chordal(A::SparseMatrixCSC; peo=nothing)
     if isnothing(peo)

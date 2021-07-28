@@ -58,7 +58,7 @@ Orders supernodes such that elements of each supernode are numbered consecutivel
 and the order is a topological ordering of the reprsentative vertices in the
 supernodal elimination tree. (See [VA15, 4.6])
 
-#Reference
+# Reference
 [VA15] [Chordal Graphs and Semidefinite Optimization](https://www.seas.ucla.edu/~vandenbe/publications/chordalsdp.pdf)
 by Lieven Vandenberghe and Martin Andersen
 """
@@ -89,9 +89,8 @@ end
 
 Generates a CliqueTree from chordally sparse matrix `A`.
 
-#Reference
-[VA15] [Chordal Graphs and Semidefinite Optimization](https://www.seas.ucla.edu/~vandenbe/publications/chordalsdp.pdf)
-by Lieven Vandenberghe and Martin Andersen
+# Reference
+[VA15] [Chordal Graphs and Semidefinite Optimization](https://www.seas.ucla.edu/~vandenbe/publications/chordalsdp.pdf) by Lieven Vandenberghe and Martin Andersen
 """
 function generate_clique_tree(A::SparseMatrixCSC{Tv, Ti}) where {Tv <: AbstractFloat, Ti <: Integer}
     size(A, 1) != size(A, 2) && error(ArgumentError("A must be square"))
@@ -183,12 +182,10 @@ indicator.
 
 Implemented using [VA15, Algorithm 4.1], which was originally formulated by [PS89].
 
-#References
-[PS89] [Compact clique tree data structures in sparse matrix factorizations](https://minds.wisconsin.edu/bitstream/handle/1793/59224/TR897.pdf?sequence=1&isAllowed=y)
-by Alex Pothen and Chunguang Sun
+# References
+* [PS89] [Compact clique tree data structures in sparse matrix factorizations](https://minds.wisconsin.edu/bitstream/handle/1793/59224/TR897.pdf?sequence=1&isAllowed=y) by Alex Pothen and Chunguang Sun
 
-[VA15] [Chordal Graphs and Semidefinite Optimization](https://www.seas.ucla.edu/~vandenbe/publications/chordalsdp.pdf)
-by Lieven Vandenberghe and Martin Andersen
+* [VA15] [Chordal Graphs and Semidefinite Optimization](https://www.seas.ucla.edu/~vandenbe/publications/chordalsdp.pdf) by Lieven Vandenberghe and Martin Andersen
 """
 function max_supernode_etree(L::SparseMatrixCSC, etree_par::Vector{Int})
     n = size(L, 1)
