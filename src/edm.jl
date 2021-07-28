@@ -1,5 +1,13 @@
+"""
+    edm_completion(A::SparseMatrixCSC{Tv, Ti}) where {Tv <: AbstractFloat, Ti <: Integer}
 
+Returns a Euclidean distance matrix completion of `A` if it is EDM-completable
+using Algorithm 11.1 in [VA15].
 
+# Reference
+[VA15] [Chordal Graphs and Semidefinite Optimization](https://www.seas.ucla.edu/~vandenbe/publications/chordalsdp.pdf)
+by Lieven Vandenberghe and Martin Andersen
+"""
 function edm_completion(A::SparseMatrixCSC{Tv, Ti}) where {Tv <: AbstractFloat, Ti <: Integer}
     !issymmetric(A) && error(ArgumentError("A must be symmetric"))
     n = size(A, 1)
@@ -78,6 +86,12 @@ function edm_completion(A::SparseMatrixCSC{Tv, Ti}) where {Tv <: AbstractFloat, 
 end
 
 
+
+"""
+    is_edm_completable(A::SparseMatrixCSC, ct::CliqueTree)
+
+Checks if `A` is EDM completable. Requires the associated CliqueTree `ct`.
+"""
 function is_edm_completable(A::SparseMatrixCSC, ct::CliqueTree)
     cliques = get_cliques(ct)
     for c in cliques
@@ -87,6 +101,13 @@ function is_edm_completable(A::SparseMatrixCSC, ct::CliqueTree)
 end
 
 
+"""
+    is_edm(M::AbstractMatrix)
+
+Checks if `M` is a Euclidean Distance Matrix. Note: a matrix is a EDM iff it is
+negative semidefinite on the subspace on the subspace orthogonal to the all ones
+vector.
+"""
 function is_edm(M::AbstractMatrix)
     (!iszero(diag(M)) || !issymmetric(M)) && return false
     n = size(M, 1)
