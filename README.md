@@ -23,11 +23,11 @@ These cliques can be further combined (replacing structural zeros with numeric z
 
 
 ## Additional functionality to include and TODOs
-- [ ] Min rank matrix completion
-- [ ] Utility functions for SDP decomposition with JuMP
+- [ ] Min rank matrix completion (_in progress_)
+- [X] Utility functions for SDP decomposition with JuMP
 - [ ] Symbolic and numeric cholesky factorization
-- [ ] Allow user-specified weight algorithm for clique graph merging
-- [ ] Euclidean distance matrix completion
+- [ ] Allow user-specified weight function for clique graph merging
+- [X] Euclidean distance matrix completion
 
 ## References
 - Lieven Vandenberghe and Martin Andersen's [Chordal Graphs and Semidefinite Optimization](https://www.seas.ucla.edu/~vandenbe/publications/chordalsdp.pdf)
