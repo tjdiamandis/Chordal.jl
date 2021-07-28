@@ -25,6 +25,7 @@ using LightGraphs: SimpleGraph
     A2 = sparse(II, JJ, ones(length(II)))
     A2 = (A2 + A2') / 2
 
+    # TODO: Figure out error from LightGraphs
     peo = CD.maximum_cardinality_search(A1)
     # @test peo == CD.maximum_cardinality_search(SimpleGraph(A1))
     @test CD.is_chordal(A1; peo=peo)
