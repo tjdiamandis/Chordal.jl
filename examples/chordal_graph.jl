@@ -1,12 +1,12 @@
 cd(joinpath(@__DIR__, "."))
 Pkg.activate(".")
-using ChordalDecomp
+using Chordal
 using LinearAlgebra, SparseArrays, LightGraphs
 using Plots: spy
 using GraphPlot: gplot
-const CD = ChordalDecomp
+const CD = Chordal
 
-function plot_clique_graph(cg::ChordalDecomp.CliqueGraph)
+function plot_clique_graph(cg::Chordal.CliqueGraph)
         nc = length(cg.active_cliques)
         ind = sort(collect(cg.active_cliques))
         reduced_edge_mat = cg.edge_mat[ind,ind]
@@ -39,7 +39,7 @@ spy(sp, ms=10)
 
 ## Find cliques
 sp = sp + tril(sp, -1)'
-ChordalDecomp.preprocess!(sp)
+Chordal.preprocess!(sp)
 
 sparsity_graph = SimpleGraph(sp)
 cliques = maximal_cliques(sparsity_graph)

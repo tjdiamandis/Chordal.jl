@@ -1,6 +1,6 @@
 [deps]
 COSMO = "1e616198-aa4e-51ec-90a2-23f7fbd31d8d"
-ChordalDecomp = "c40dd8eb-886b-47e3-91a7-7e6ae22bd2fd"
+Chordal = "c40dd8eb-886b-47e3-91a7-7e6ae22bd2fd"
 GraphPlot = "a2cc645c-3eea-5389-862e-a155d0052231"
 Hypatia = "b99e6be6-89ff-11e8-14f8-45c827f4f8f2"
 LightGraphs = "093fc24a-ae57-5d10-9952-331d41423f4d"

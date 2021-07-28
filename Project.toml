@@ -1,4 +1,4 @@
-name = "ChordalDecomp"
+name = "Chordal"
 uuid = "c40dd8eb-886b-47e3-91a7-7e6ae22bd2fd"
 authors = ["Theo Diamandis"]
 version = "0.1.0"

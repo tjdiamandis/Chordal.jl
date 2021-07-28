@@ -1,12 +1,12 @@
 ```@meta
-CurrentModule = ChordalDecomp
+CurrentModule = Chordal
 ```
 
-# ChordalDecomp
+# Chordal
 
 ```@index
 ```
 
 ```@autodocs
-Modules = [ChordalDecomp]
+Modules = [Chordal]
 ```

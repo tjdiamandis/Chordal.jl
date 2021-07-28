@@ -11,7 +11,7 @@ using Random
            (16,5), (16,6), (16,9), (16,12), (16,13), (16,14), (16,15),
            (17,10), (17,11), (17,12), (17,13), (17,14), (17,15), (17,16)]
     append!(ijs, [(i,i) for i in 1:n])
-    II, JJ = ChordalDecomp.unzip(ijs)
+    II, JJ = Chordal.unzip(ijs)
     A = sparse(II, JJ, ones(length(II)))
     A = (A + A') / 2
     sp = sparsity_pattern(A)
@@ -30,13 +30,13 @@ using Random
     @test ≈(A[CartesianIndex.(ijs)], W[CartesianIndex.(ijs)])
     @test det(W) ≈ pstar
 
-    L, D = ChordalDecomp.maxdet_completion_etree(A)
+    L, D = Chordal.maxdet_completion_etree(A)
     W = inv(D) * inv(LowerTriangular(Matrix(L)))
     W = L' \ W
     @test ≈(A[CartesianIndex.(ijs)], W[CartesianIndex.(ijs)])
     @test det(W) ≈ pstar
 
-    L, D = ChordalDecomp.maxdet_completion_factors(A)
+    L, D = Chordal.maxdet_completion_factors(A)
     W = inv(Matrix(D)) * inv(LowerTriangular(Matrix(L)))
     W = L' \ W
     @test ≈(A[CartesianIndex.(ijs)], W[CartesianIndex.(ijs)])
@@ -65,7 +65,7 @@ using Random
     W = L' \ W
     @test ≈(M_, sp.*W, atol=1e-6)
 
-    # L, D = ChordalDecomp.maxdet_completion_factors(M_)
+    # L, D = Chordal.maxdet_completion_factors(M_)
     # W = inv(Matrix(D)) * inv(LowerTriangular(Matrix(L)))
     # W = L' \ W
     # @test ≈(M_, sp.*W, atol=1e-6)

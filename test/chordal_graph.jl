@@ -21,7 +21,7 @@ using LightGraphs: SimpleGraph
            (16,5), (16,6), (16,9), (16,12), (16,13), (16,14), (16,15),
            (17,10), (17,11), (17,12), (17,13), (17,14), (17,15), (17,16)]
     append!(ijs, [(i,i) for i in 1:n2])
-    II, JJ = ChordalDecomp.unzip(ijs)
+    II, JJ = Chordal.unzip(ijs)
     A2 = sparse(II, JJ, ones(length(II)))
     A2 = (A2 + A2') / 2
 

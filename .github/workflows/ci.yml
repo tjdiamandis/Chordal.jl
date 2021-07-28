@@ -53,8 +53,8 @@ jobs:
       - run: |
           julia --project=docs -e '
             using Documenter: doctest
-            using ChordalDecomp
-            doctest(ChordalDecomp)'
+            using Chordal
+            doctest(Chordal)'
       - run: julia --project=docs docs/make.jl
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

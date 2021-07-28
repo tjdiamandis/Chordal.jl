@@ -1,8 +1,8 @@
-using ChordalDecomp
+using Chordal
 using Documenter
 
 makedocs(;
-    modules=[ChordalDecomp],
+    modules=[Chordal],
     authors="Theo Diamandis",
     repo="https://github.com/tjdiamandis/Chordal.jl/blob/{commit}{path}#L{line}",
     sitename="Chordal.jl",

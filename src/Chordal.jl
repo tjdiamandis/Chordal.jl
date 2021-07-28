@@ -1,5 +1,5 @@
 
-module ChordalDecomp
+module Chordal
 
 using SparseArrays, SuiteSparse, LinearAlgebra
 using JuMP

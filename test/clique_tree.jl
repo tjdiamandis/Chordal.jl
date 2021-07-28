@@ -6,7 +6,7 @@ ijs = [(3,1), (3,2), (4,1), (4,2), (4,3), (5,1), (5,3), (5,4), (8,7),
        (16,5), (16,6), (16,9), (16,12), (16,13), (16,14), (16,15),
        (17,10), (17,11), (17,12), (17,13), (17,14), (17,15), (17,16)]
 append!(ijs, [(i,i) for i in 1:n])
-I, J = ChordalDecomp.unzip(ijs)
+I, J = Chordal.unzip(ijs)
 A = sparse(I, J, ones(length(I)))
 A = A + A'
 L = qdldl(A; perm=nothing, logical=true).L

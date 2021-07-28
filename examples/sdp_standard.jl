@@ -1,10 +1,10 @@
 cd(@__DIR__)
 Pkg.activate("..")
-using ChordalDecomp
+using Chordal
 using JuMP, Hypatia, COSMO
 using SparseArrays, LinearAlgebra, Random
 
-const CD = ChordalDecomp
+const CD = Chordal
 
 rand_seed = 1234
 n = 200

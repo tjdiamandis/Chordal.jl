@@ -1,9 +1,9 @@
-using ChordalDecomp
+using Chordal
 using Test
 
 using LinearAlgebra, SparseArrays
 using QDLDL
-const CD = ChordalDecomp
+const CD = Chordal
 
 include("chordal_graph.jl")
 include("clique_tree.jl")
