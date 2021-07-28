@@ -18,4 +18,5 @@ makedocs(;
 
 deploydocs(;
     repo="github.com/tjdiamandis/Chordal.jl",
+    devbranch = "main"
 )
