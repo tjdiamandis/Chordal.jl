@@ -1,5 +1,5 @@
 # Chordal
-
+[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://tjdiamandis.github.io/ChordalDecomp.jl/dev)
 [![Build Status](https://github.com/tjdiamandis/Chordal.jl/workflows/CI/badge.svg)](https://github.com/tjdiamandis/Chordal.jl/actions)
 [![codecov](https://codecov.io/gh/tjdiamandis/Chordal.jl/branch/main/graph/badge.svg?token=ZPW6OXSD9A)](https://codecov.io/gh/tjdiamandis/Chordal.jl)
 
