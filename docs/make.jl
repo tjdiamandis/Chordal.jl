@@ -4,11 +4,11 @@ using Documenter
 makedocs(;
     modules=[ChordalDecomp],
     authors="Theo Diamandis",
-    repo="https://github.com/tjdiamandis/ChordalDecomp.jl/blob/{commit}{path}#L{line}",
-    sitename="ChordalDecomp.jl",
+    repo="https://github.com/tjdiamandis/Chordal.jl/blob/{commit}{path}#L{line}",
+    sitename="Chordal.jl",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
-        canonical="https://tjdiamandis.github.io/ChordalDecomp.jl",
+        canonical="https://tjdiamandis.github.io/Chordal.jl",
         assets=String[],
     ),
     pages=[
@@ -17,5 +17,5 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/tjdiamandis/ChordalDecomp.jl",
+    repo="github.com/tjdiamandis/Chordal.jl",
 )
