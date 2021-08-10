@@ -4,7 +4,6 @@ using Chordal
 using LinearAlgebra, SparseArrays, LightGraphs
 using Plots: spy
 using GraphPlot: gplot
-const CD = Chordal
 
 function plot_clique_graph(cg::Chordal.CliqueGraph)
         nc = length(cg.active_cliques)
@@ -32,7 +31,7 @@ nonzero_inds = vcat([
     ],
     [(i,i) for i in 1:n]
 )
-sp = sparse(CD.unzip(nonzero_inds)..., [10i+j for (i, j) in nonzero_inds])
+sp = sparse(Chordal.unzip(nonzero_inds)..., [10i+j for (i, j) in nonzero_inds])
 spy(sp, ms=10)
 # c.f. Figure 1
 
