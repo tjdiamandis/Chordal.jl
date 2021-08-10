@@ -1,24 +1,44 @@
-cd(@__DIR__)
-Pkg.activate("..")
+#=
+# Semidefinite Program Decomposition
+This example illustrates how to decompose a positive semidefinite constraint with
+`Chordal.jl`. The decomposed constraint can then be plugged into your favorite
+semidefinite program (SDP) solver.
+=#
+
+#=
+## Problem Setup
+We first generate a random SDP using `generate_random_sdp(n)`, which
+constructs problems of the form
+
+$$
+\begin{array}{ll}
+\text{minimize} &c^Tx \\
+\text{subject to} & \sum_{i=1}^m F_ix_i + G \succeq 0.
+\end{array}
+$$
+=#
+
+#-
 using Chordal
-using JuMP, Hypatia, COSMO
+using JuMP, SCS
 using SparseArrays, LinearAlgebra, Random
-const CD = Chordal
 
 rand_seed = 1234
-n = 200
-# optimizer = Hypatia.Optimizer
-optimizer = optimizer_with_attributes(COSMO.Optimizer, "decompose" => false)
+n = 500
+optimizer = SCS.Optimizer
 
-# min c^Tx st ΣF_ix_i + G ∈ PSDCONE()
-# D is dual variable
-c, F, G, xstar, D = CD.generate_random_sdp(n, rand_seed=rand_seed)
+## D is the dual variable and xstar is an optimal solution
+c, F, G, xstar, D = Chordal.generate_random_sdp(n, rand_seed=rand_seed);
 
-# ------------------------------------------------------
-# -------------------- LMI Form SDP --------------------
-# ------------------------------------------------------
+#=
+## Standard Solve
+First, we build the SDP using `JuMP` and solve it using `SCS` without chordal
+decomposition.
+=#
+#-
 ## Without decomposition
 m = Model(optimizer)
+JuMP.set_silent(m)
 @variable(m, x[1:n])
 @constraint(m, sum(F[i]*x[i] for i in 1:n) + G ∈ PSDCone())
 @objective(m, Min, dot(c, x))
@@ -31,22 +51,33 @@ pstar = dot(c,xv)
 @info "Difference with true optimal: $(norm(xv - xstar))"
 @info "Optimal value: $pstar"
 
+#=
+## Solving after Chordal Decomposition
+Next, we use chordal decomposition tools from `Chordal.jl` to decompose the PSD
+constraint into smaller blocks.
+=#
 
 ## Chordal Decomposition Setup
 m2 = Model(optimizer)
+JuMP.set_silent(m2)
 @variable(m2, y[1:n])
 
-# A = sum(F[i]*y[i] for i in 1:n) + G
-# A + S ∈ PSDCone(), where S ⪰ 0
-A = CD.build_A(y, F, G)
+## build_A is a helper function to construct the SDP
+## A = sum(F[i]*y[i] for i in 1:n) + G
+## A + S ∈ PSDCone(), where S ⪰ 0
+A = Chordal.build_A(y, F, G)
 nnzA = nnz(A)
 @info "There are $nnzA nonzeros; density = $(round(nnzA/n^2, digits=3))"
 time_constraints = @elapsed build_constraints_lmi!(m2, A)
-# NOTE: Can also call build_constraints_lmi!(m2, y, F, G)
+## NOTE: Can also call build_constraints_lmi!(m2, y, F, G)
 @info "Finished adding constraints, time = $(round(time_constraints, digits=3))s"
 @objective(m2, Min, dot(c,y))
 @info "Finished setup"
 
+#=
+We can solve the decomposed model with any SDP solver (here we use SCS).
+=#
+#-
 ## Chordal Decomposition Solve
 time_chordal = @elapsed optimize!(m2)
 yv = value.(y)
