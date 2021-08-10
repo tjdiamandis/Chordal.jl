@@ -43,13 +43,13 @@ println("\nCompletion:")
 #=
 ## Larger Random Example
 
-First, we generate an EDM from 17 vectors in $\mathbb{R}^3}.
+First, we generate an EDM from 17 vectors in $\mathbb{R}^3}$.
 =#
 n = 17
 r = 3
 V = randn(n, r)
 VV = V*V'
-D_full = diag(VV)*ones(n)' + ones(n)*diag(VV)' - 2VV
+D_full = diag(VV)*ones(n)' + ones(n)*diag(VV)' - 2VV;
 
 #=
 Next, we remove entries. and complete the
