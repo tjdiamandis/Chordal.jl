@@ -28,6 +28,7 @@ These cliques can be further combined (replacing structural zeros with numeric z
 - [ ] Symbolic and numeric cholesky factorization
 - [ ] Allow user-specified weight function for clique graph merging
 - [X] Euclidean distance matrix completion
+- [ ] Only support LMI form of SDP & use `Dualization.jl` to convert standard form.
 
 ## References
 - Lieven Vandenberghe and Martin Andersen's [Chordal Graphs and Semidefinite Optimization](https://www.seas.ucla.edu/~vandenbe/publications/chordalsdp.pdf)
