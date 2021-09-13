@@ -78,10 +78,11 @@ function get_chordal_extension(sp_pattern::SparseMatrixCSC; perm="amd", verbose=
 		# Convert to Int64 for QDLDL (ret as Int32)
 		# first arg = perm (second = iperm)
 		p = Int.(Metis.permutation(sp_pattern)[1])
+    elseif perm == "cuthill-mckee"
+		p = cuthill_mckee(sp_pattern)
 	else
 		error(ArgumentError("Invalid permutation"))
 	end
-	# TODO: add Cuthill-McKee (https://en.wikipedia.org/wiki/Cuthill–McKee_algorithm)
 	# TODO: add greedy
 	# Algorithm: (summarized in Bodlaender & Koster, Treewith computations I. Upper bounds)
 	# H = copy(G)
@@ -100,11 +101,15 @@ function get_chordal_extension(sp_pattern::SparseMatrixCSC; perm="amd", verbose=
 	# Greedy degree fill in			f(u) + 1/n * d(u)
 
 	F = QDLDL.qdldl(sp_pattern, perm=p, logical=true)
-	num_nonzero = 2*nnz(F.L) + n
-	num_nonzero_added = (num_nonzero - nnz(sp_pattern)) ÷ 2
 
-	verbose && @info "Chordal Extension added $num_nonzero_added nonzeros."
-	verbose && @info "Density: $(round(num_nonzero/n^2; digits=5))"
+	if verbose
+		num_nonzero = 2*nnz(F.L) + n
+		num_nonzero_added = (num_nonzero - nnz(sp_pattern)) ÷ 2
+
+		@info "Chordal Extension added $num_nonzero_added nonzeros."
+		@info "Density: $(round(num_nonzero/n^2; digits=5))"
+	end
+
     return F.perm, F.iperm, F.L
 end
 
@@ -118,4 +123,11 @@ triangular matrix `L`.
 function get_cliques(L::SparseMatrixCSC)
 	G = SimpleGraph(L + L')
 	return maximal_cliques(G)
+end
+
+
+function cuthill_mckee(sp::SparseMatrixCSC)
+	# TODO: Custom implementation for efficiency?
+	# Cuthill-McKee (https://en.wikipedia.org/wiki/Cuthill–McKee_algorithm)
+	return symrcm(sp)
 end
