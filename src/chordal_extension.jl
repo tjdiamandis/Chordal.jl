@@ -1,7 +1,6 @@
 import QDLDL
 using LightGraphs: SimpleGraph, maximal_cliques
-using CuthillMcKee: symrcm
-import AMD, Metis
+import AMD, Metis, CuthillMcKee
 
 
 function preprocess!(mats::AbstractVector{SparseMatrixCSC{T,S}}) where {T <: Number, S <: Integer}
@@ -63,6 +62,13 @@ sparsity_pattern(mat::SparseMatrixCSC) = sparsity_pattern([mat])
 Returns `p, ip, L`, where `L` is a lower-triangular matrix representing the
 chordal extension of the undirected graph `sp_pattern` after fill-reducing permutation
 `p` (with inverse permutation `ip`).
+
+Options for perm include
+	- `"nothing"` (no permutation)
+	- `amd` (approximate minimum degree)
+	- `metis` (uses [METIS](http://glaros.dtc.umn.edu/gkhome/metis/metis/overview))
+	- `cuthill-mckee` (Cuthill-McKee bandwidth reducing algorithm)
+
 """
 function get_chordal_extension(sp_pattern::SparseMatrixCSC; perm="amd", cost=nothing, verbose=false)
 	!issymmetric(sp_pattern) && error(ArgumentError("Matrix must be symmetric"))
@@ -71,17 +77,18 @@ function get_chordal_extension(sp_pattern::SparseMatrixCSC; perm="amd", cost=not
 	# Permutations: nothing, amd, vertex separators, TODO: add more options?
 	# See survey Minimal triangulations of graphs: A survey
 	# https://www.sciencedirect.com/science/article/pii/S0012365X05006060
-	if perm == "none" || perm == "nothing"
+	if perm == "none" || perm == "nothing" || isnothing(perm)
 		p = nothing
 	elseif perm == "amd"
 		p = AMD.amd(sp_pattern)
-	elseif perm == "vsep"
+	elseif perm == "metis"
 		# Convert to Int64 for QDLDL (ret as Int32)
 		# first arg = perm (second = iperm)
 		p = Int.(Metis.permutation(sp_pattern)[1])
     elseif perm == "cuthill-mckee"
 		p = cuthill_mckee(sp_pattern)
 	elseif perm == "greedy" && !isnothing(cost)
+		# NOTE: This part isn't really working well yet
 		# Choose v according to criterion X
 		# Let v be the eith vertex in ordering p
 		# Let H be the graph obstained by eliminating v from H
@@ -141,7 +148,7 @@ end
 function cuthill_mckee(sp::SparseMatrixCSC)
 	# TODO: Custom implementation for efficiency?
 	# Cuthill-McKee (https://en.wikipedia.org/wiki/Cuthill–McKee_algorithm)
-	return symrcm(sp)
+	return CuthillMcKee.symrcm(sp)
 end
 
 
