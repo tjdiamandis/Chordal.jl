@@ -224,29 +224,20 @@ function minrank_completion(A::SparseMatrixCSC{Tv, Ti}) where {Tv <: AbstractFlo
     n = size(A, 1)
 
     sp = sparsity_pattern(A)
-    _, _, L = get_chordal_extension(sp; perm=nothing)
-    etree_par = get_etree(L)
-    vreps, snd_par, snd_membership = max_supernode_etree(L, etree_par)
-    n_snds = length(vreps)
-    snds = [Vector{Int}(undef, 0) for _ in 1:n_snds]
-    for v in 1:n
-        push!(snds[snd_membership[v]], v)
-    end
-    snd_children = get_children_from_par(snd_par)
-    post_ord = get_postordering(snd_par, snd_children)
-
-    #TODO: Should the above be changed to use the CliqueTree data structure?
+    L = get_chordal_extension(sp; perm=nothing, verbose=false)[3]
+    ct = CliqueTree(L)
+    n_snds = length(ct.vreps)
 
     # Determine rank
     r = maximum([rank(Matrix(A[c,c]), rtol=1e-10) for c in get_cliques(L)])
 
     Y = zeros(n, r)
     for j in n_snds:-1:1
-        vrep_ind = post_ord[j]
-        vrep = vreps[vrep_ind]
+        vrep_ind = ct.postordering[j]
+        vrep = ct.vreps[vrep_ind]
 
         # col_j = vcat([vrep], rowvals(L)[nzrange(L, vrep)])
-        ν = snds[vrep_ind]
+        ν = ct.snds[vrep_ind]
         α = filter(x->!(x in ν), rowvals(L)[nzrange(L, vrep)])
         col_j = vcat(ν, α)
 
