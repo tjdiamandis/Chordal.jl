@@ -6,3 +6,4 @@
 Manifest.toml
 /docs/build/
 /docs/src/examples/*.md
+.vscode/
