@@ -6,7 +6,7 @@
 Returns the maximum determinant completion of chordal sparse matrix `A` using
 Algorithm 10.2 in [VA15].
 
-#Reference
+# Reference
 [VA15] [Chordal Graphs and Semidefinite Optimization](https://www.seas.ucla.edu/~vandenbe/publications/chordalsdp.pdf)
 by Lieven Vandenberghe and Martin Andersen
 """
@@ -60,7 +60,7 @@ Returns the cholesky factors of the inverse of the maximum determinant completio
 of chordal sparse matrix `A` using Algorithm 4.2 in [ADV14]. This algorithm uses
 the elimination tree of `A` and, therefore, BLAS level 2 operations.
 
-#Reference
+# Reference
 [ADV12] [Logarithmic barriers for sparse matrix cones](https://arxiv.org/abs/1203.2742)
 by Martin S. Andersen, Joachim Dahl, Lieven Vandenberghe
 """
@@ -133,7 +133,7 @@ Returns the cholesky factors of the inverse of the maximum determinant completio
 of chordal sparse matrix `A` using Algorithm 7.3 in [ADV14]. This algorithm uses
 the supernodal elimination tree of `A` and, therefore, BLAS level 3 operations.
 
-#Reference
+# Reference
 [ADV12] [Logarithmic barriers for sparse matrix cones](https://arxiv.org/abs/1203.2742)
 by Martin S. Andersen, Joachim Dahl, Lieven Vandenberghe
 """
@@ -215,7 +215,7 @@ Returns the cholesky factor of the minimum rank completion (`A_complete = Y*Yᵀ
 of chordal sparse matrix `A` using Algorithm 2 in [Sun15]. This algorithm uses
 the supernodal elimination tree of `A` and, therefore, BLAS level 3 operations.
 
-#Reference
+# Reference
 [Sun15] [Decomposition Methods for Semidefinite Optimization (PhD Thesis)](https://escholarship.org/content/qt1cv6981p/qt1cv6981p.pdf)
 by Yifan Sun
 """
