@@ -26,8 +26,8 @@ pstar = dot(c,xv)
 @info &quot;Difference with true optimal: $(norm(xv - xstar))&quot;
 @info &quot;Optimal value: $pstar&quot;</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">[ Info: termination status: OPTIMAL
 [ Info: solution status: FEASIBLE_POINT
-[ Info: Difference with true optimal: 2.0796747189442882e-8
-[ Info: Optimal value: 1323.6334477816933</code></pre><h2 id="Solving-after-Chordal-Decomposition"><a class="docs-heading-anchor" href="#Solving-after-Chordal-Decomposition">Solving after Chordal Decomposition</a><a id="Solving-after-Chordal-Decomposition-1"></a><a class="docs-heading-anchor-permalink" href="#Solving-after-Chordal-Decomposition" title="Permalink"></a></h2><p>Next, we use chordal decomposition tools from <code>Chordal.jl</code> to decompose the PSD constraint into smaller blocks.</p><pre><code class="language-julia hljs"># Chordal Decomposition Setup
+[ Info: Difference with true optimal: 1.8294307337999432e-8
+[ Info: Optimal value: 1323.6334481079173</code></pre><h2 id="Solving-after-Chordal-Decomposition"><a class="docs-heading-anchor" href="#Solving-after-Chordal-Decomposition">Solving after Chordal Decomposition</a><a id="Solving-after-Chordal-Decomposition-1"></a><a class="docs-heading-anchor-permalink" href="#Solving-after-Chordal-Decomposition" title="Permalink"></a></h2><p>Next, we use chordal decomposition tools from <code>Chordal.jl</code> to decompose the PSD constraint into smaller blocks.</p><pre><code class="language-julia hljs"># Chordal Decomposition Setup
 m2 = Model(optimizer)
 JuMP.set_silent(m2)
 @variable(m2, y[1:n])
@@ -43,7 +43,7 @@ time_constraints = @elapsed build_constraints_lmi!(m2, A)
 @info &quot;Finished adding constraints, time = $(round(time_constraints, digits=3))s&quot;
 @objective(m2, Min, dot(c,y))
 @info &quot;Finished setup&quot;</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">[ Info: There are 4898 nonzeros; density = 0.02
-[ Info: Finished adding constraints, time = 2.288s
+[ Info: Finished adding constraints, time = 2.81s
 [ Info: Finished setup</code></pre><p>We can solve the decomposed model with any SDP solver (here we use SCS).</p><pre><code class="language-julia hljs"># Chordal Decomposition Solve
 time_chordal = @elapsed optimize!(m2)
 yv = value.(y)
@@ -55,6 +55,6 @@ pstar_chordal = dot(c,yv)
 @info &quot;difference with true variable: $(norm(yv - xstar))&quot;
 @info &quot;Time with chordal is $(round(time_chordal, digits=3))s vs $(round(time_non_chordal, digits=3))s&quot;</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">[ Info: termination status: OPTIMAL
 [ Info: solution status: FEASIBLE_POINT
-[ Info: difference with non-chordal: 1.999624240774685e-6
-[ Info: difference with true variable: 1.9918617369165727e-6
-[ Info: Time with chordal is 3.326s vs 18.076s</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../edm/">« Euclidean Distance Matrix Completion</a><a class="docs-footer-nextpage" href="../../api/">API Reference »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.10 on <span class="colophon-date" title="Monday 25 October 2021 23:32">Monday 25 October 2021</span>. Using Julia version 1.6.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+[ Info: difference with non-chordal: 1.5847815572339234e-6
+[ Info: difference with true variable: 1.5726729354779207e-6
+[ Info: Time with chordal is 3.954s vs 22.06s</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../edm/">« Euclidean Distance Matrix Completion</a><a class="docs-footer-nextpage" href="../../api/">API Reference »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.10 on <span class="colophon-date" title="Monday 25 October 2021 23:39">Monday 25 October 2021</span>. Using Julia version 1.6.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
