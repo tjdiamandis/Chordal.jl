@@ -225,6 +225,8 @@ function minrank_completion(A::SparseMatrixCSC{Tv, Ti}) where {Tv <: AbstractFlo
     snd_children = get_children_from_par(snd_par)
     post_ord = get_postordering(snd_par, snd_children)
 
+    #TODO: Should the above be changed to use the CliqueTree data structure?
+
     # Determine rank
     r = maximum([rank(Matrix(A[c,c]), rtol=1e-10) for c in get_cliques(L)])
 
@@ -243,45 +245,32 @@ function minrank_completion(A::SparseMatrixCSC{Tv, Ti}) where {Tv <: AbstractFlo
         r_ = min(length(dd), r)
         Z = VV[:,1:r_]*Diagonal(sqrt.(max.(real.(dd[1:r_]), 0.0)))
 
-
+        # First block to be filled
         if j == n_snds
             Y[ν, 1:r_] .= Z[1:length(ν), :]
             continue
         end
 
+        # Zero padding to make dimensions line up appropriately
+        U = zeros(length(ν), r)
+        V = zeros(size(Z,1) - length(ν), r)
+        U[:, 1:r_] .= Z[1:length(ν), 1:r_]
+        V[:, 1:r_] .= Z[length(ν)+1:end, 1:r_]
 
 
-        U = @view(Z[1:length(ν), 1:r_])
-        V = @view(Z[length(ν)+1:end, 1:r_])
+        Q2, Σ, Q1 = svd(V'*Y[α, :], full=true)
+        Q = Q2*Q1'        
+    
 
-        W_Y, Σ_Y, Q_Y = svd(Y[α, :], full=true, alg = LinearAlgebra.QRIteration())
-        W_V, Σ_V, Q_V = svd(V, full=true, alg = LinearAlgebra.QRIteration())
-        svd_err = sum(abs.(Σ_Y .- Σ_V))
-        # @show svd_err
-        #
-        # Q = Q_V*Q_Y'
-        # # @show Y[α, :]
-        # if !all(Y[α, :] .≈ V*Q)
-        #     d = sign.((Y[α, :]*Q_Y)[1,:]) .* sign.((V*Q_V)[1,:])
-        #     Q = Q_V*Diagonal(d)*Q_Y'
-        # end
-        # Q2, Σ, Q1 = svd(V'*Y[α, 1:r_], full=true, alg = LinearAlgebra.QRIteration())
-
-        Q2, Σ, Q1 = svd(V'*Y[α, 1:r_], full=true)
-        Q = Q2*Q1'
-
-        # @show size(U)
-        # @show size(Y[α, 1:r_])
-
-        # S = svd(Y[α, 1:r_], U)
-        # Q = S.V' * S.U
-        # @show size(S.V)
-        Y[ν, 1:r_] .= U*Q
-        if any(abs.(A[col_j, col_j] .- Y[col_j, 1:r_]*Y[col_j, 1:r_]') .> 1e-3)
-            @show col_j, ν, α
-            display(Y[col_j, :])
-            display(A[col_j, col_j] .- Y[col_j, 1:r_]*Y[col_j, 1:r_]')
+        #want Y[α, :] == V*Q'
+        if !≈(Y[α, :], V*Q)
+            # Take generalized SVD
+            F = svd(Matrix(V'), Matrix(Y[α, :]'))
+            Q = F.U*F.V'
         end
+
+        
+        Y[ν, :] .= U*Q
     end
     return Y
 end
