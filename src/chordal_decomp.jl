@@ -54,7 +54,7 @@ Returns the (merged) cliques of the graph corresponding to the sparsity pattern
 of `input_mat` (after a permutation to reduce fill-in) and optionally the cliques.
 Also returns the fill-reducing permutation and and inverse permutation used.
 """
-function get_selectors(input_mat::SparseMatrixCSC; verbose=true, ret_cliques=true)
+function get_selectors(input_mat::SparseMatrixCSC; verbose=true, ret_cliques=true, perm="amd")
     n = size(input_mat)[1]
     preprocess!(input_mat)
 
@@ -65,7 +65,7 @@ function get_selectors(input_mat::SparseMatrixCSC; verbose=true, ret_cliques=tru
     end
 
     # L is the chordal extension of sp under reordering perm
-    perm, iperm, L = get_chordal_extension(sp; verbose=verbose)
+    perm, iperm, L = get_chordal_extension(sp; verbose=verbose, perm=perm)
 
     cliques = get_cliques(L)
     cg = generate_clique_graph(cliques, n)
