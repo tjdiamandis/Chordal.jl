@@ -239,7 +239,6 @@ function minrank_completion(A::SparseMatrixCSC{Tv, Ti}) where {Tv <: AbstractFlo
         ν = snds[vrep_ind]
         α = filter(x->!(x in ν), rowvals(L)[nzrange(L, vrep)])
         col_j = vcat(ν, α)
-        # @show ν, α
 
         dd, VV = eigen(Symmetric(Matrix(@view(A[col_j,col_j])), :L), sortby=x->-real(x))
         r_ = min(length(dd), r)
@@ -257,19 +256,16 @@ function minrank_completion(A::SparseMatrixCSC{Tv, Ti}) where {Tv <: AbstractFlo
         U[:, 1:r_] .= Z[1:length(ν), 1:r_]
         V[:, 1:r_] .= Z[length(ν)+1:end, 1:r_]
 
-
+        # Find orthogonal transform s.t. Y[α, :] == V*Q
         Q2, Σ, Q1 = svd(V'*Y[α, :], full=true)
         Q = Q2*Q1'        
     
-
-        #want Y[α, :] == V*Q'
         if !≈(Y[α, :], V*Q)
             # Take generalized SVD
             F = svd(Matrix(V'), Matrix(Y[α, :]'))
             Q = F.U*F.V'
         end
 
-        
         Y[ν, :] .= U*Q
     end
     return Y
