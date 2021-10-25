@@ -23,7 +23,7 @@ These cliques can be further combined (replacing structural zeros with numeric z
 
 
 ## Additional functionality to include and TODOs
-- [ ] Min rank matrix completion (_in progress_)
+- [X] Min rank matrix completion
 - [X] Utility functions for SDP decomposition with JuMP
 - [ ] Symbolic and numeric cholesky factorization
 - [ ] Allow user-specified weight function for clique graph merging
