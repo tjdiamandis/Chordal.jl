@@ -70,3 +70,78 @@ using Random
     # W = L' \ W
     # @test ≈(M_, sp.*W, atol=1e-6)
 end
+
+
+@testset "Min rank completion" begin
+   ## Build a test matrix
+    # From Xin Jiang's masters thesis
+    n = 9
+    nonzero_ind_val = [
+        (1,1,923.0),
+        (1,4,464.0),
+        (1,8,1215.0),
+        (2,2,1721.0),
+        (2,3,1494.0),
+        (2,5,1182.0),
+        (2,8,1638.0),
+        (3,3,1300.0),
+        (3,4,726.0),
+        (3,5,1016.0),
+        (3,8,1432.0),
+        (4,4,418.0),
+        (4,5,580.0),
+        (4,8,770.0),
+        (5,5,921.0),
+        (5,8,1209.0),
+        (5,9,959.0),
+        (6,6,677.0),
+        (6,7,421.0),
+        (6,9,746.0),
+        (7,7,270.0),
+        (7,8,661.0),
+        (7,9,499.0),
+        (8,8,1773.0),
+        (8,9,1195.0),
+        (9,9,1021.0)
+    ]
+    sp = sparse(CD.unzip(nonzero_ind_val)...)
+    sp = sp + triu(sp, 1)'
+    s_pat = sparsity_pattern([sp])
+
+
+    Y = CD.minrank_completion(sp)
+    A_comp = Y*Y'
+    matched = s_pat .* A_comp
+    @test matched ≈ sp
+
+    function bigger_mrc_test(n=50, r=4)
+        function sparsity_structure(n)
+            sp = spzeros(n, n)
+            for i in 1:n
+                block_size = randn() < 1 ? 2 : 10
+                sp[i:min(i+block_size,n), i:min(i+block_size,n)] .= 1
+            end
+            return Int.(sp)
+        end
+
+        M = rand(n,r)
+        M = M*M'
+    
+        sp = sparsity_structure(n)
+    
+        M_ = sparse(sp .* M)
+        U = CD.minrank_completion(M_)
+        M_comp = U*U'
+        err = abs.(sp.*M_comp - M_)
+        rmse = norm(err) / sqrt(length(M_))
+        # @show sp
+        # println(sp[end-4:end, end-4:end] == ones(Int, 5,5), rmse > 1e-10)
+        return rmse
+    end
+    
+    for N in [10, 20, 50, 200], r in [2, 5, 10, 20]
+        r >= N && continue
+        @test maximum([bigger_mrc_test(N, r) for i in 1:10]) < sqrt(eps())
+    end
+    
+end
