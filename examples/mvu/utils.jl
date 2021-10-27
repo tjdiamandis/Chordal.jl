@@ -1,18 +1,9 @@
 # Generate swissroll dataset
 function swissroll(n)
     # NOTE: these could be randomized too
-    theta = 1.5 .* pi .+ 1.5 .* pi .* LinRange(0, 1, n);
-    z = [iseven(i) ? 1.0 : 0.0 for i in 1:n]
+    theta = 1.5 .* pi .+ 2.5 .* pi .* LinRange(0, 1, n);
+    z = [(i % 2) for i in 1:n]
     return [theta' .* [cos.(theta'); sin.(theta')]; z'], theta;
-end
-
-function show_data(x)
-    fig = Figure(resolution=(1000,1000))
-    ax = LScene(fig)
-    GLMakie.scatter!(Point3f0.(eachcol(x)), color = theta, markersize=500)
-    # GLMakie.scatter!(Point3f0.(eachcol(x)), color = theta)
-    fig[1, 1] = ax
-    display(fig)
 end
 
 function show_data(x, theta)

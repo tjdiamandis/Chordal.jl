@@ -6,7 +6,7 @@ using GLMakie
 include("utils.jl")
 
 # Construct Dataset
-n, k = 20, 2
+n, k = 50, 2
 x, theta = swissroll(n)
 show_data(x, theta)
 
@@ -36,6 +36,7 @@ for (p, cl) in enumerate(cliques)
     @constraint(model_c, Zp in PSDCone())
 end
 optimize!(model_c)
+display(solution_summary(model_c))
 
 # Reconstruct solution
 Z_ = Chordal.reconstruct_from_sparse_varref(Z, n-1)
@@ -44,4 +45,4 @@ Z_ = 0.5*(Z_ + Z_') # Deals with numerical error
 Z_factor = Chordal.minrank_completion(Z_)
 W, sv, _ = svd(V*Z_factor)
 yc = Diagonal(sv[1:3])*W[:, 1:3]'
-show_data(yc)
+show_data(yc, theta)
