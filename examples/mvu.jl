@@ -1,5 +1,5 @@
-#=
 # Maximum Variance Unfolding (MVU)
+#=
 This example uses `Chordal.jl` to perfomr the MVU dimensionality reduction 
 technique on a toy dataset.
 =#
@@ -8,7 +8,10 @@ technique on a toy dataset.
 using Chordal
 using JuMP, Hypatia
 using SparseArrays, LinearAlgebra, Random
-using Plots
+import JSServe #hide
+JSServe.Page(exportable=true, offline=true) #hide
+using WGLMakie
+set_theme!(resolution=(1200, 600)) #hide
 
 #=
 Some helper functions are below. This section can be skipped but is included
@@ -24,30 +27,7 @@ function swissroll(n)
 end
 
 function show_data(x, theta)
-    fig = Figure(resolution=(1000,1000))
-    ax = LScene(fig)
-    scatter!(Point3f0.(eachcol(x)), color = theta, markersize=500)
-    fig[1, 1] = ax
-    return fig
-end
-
-function show_data(x, theta; c=(70,70))
-    Mx = maximum(abs.(x[1,:]))
-    My = maximum(abs.(x[2,:]))
-    Mz = maximum(abs.(x[3,:]))
-    MM = max(Mx, My, Mz)
-    Mx = max(Mx*1.1, MM*.9)
-    My = max(My*1.1, MM*.3)
-    Mz = max(Mz*1.1, MM*.3)
-    return scatter(x[1,:], x[2,:], x[3,:],
-        legend=false,
-        zcolor=theta,
-        xlims=(-Mx,Mx),
-        ylims=(-My, My),
-        zlims=(-Mz,Mz),
-        markersize=7,
-        camera=c
-    )
+    return scatter(Point3f0.(eachcol(x)), color = theta, markersize=500)
 end
 
 ## Constructs Euclidean Distance Matrix given vectors x = [x_1 ... x_n]
