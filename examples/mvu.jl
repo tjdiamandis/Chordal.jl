@@ -8,16 +8,18 @@ technique on a toy dataset.
 using Chordal
 using JuMP, Hypatia
 using SparseArrays, LinearAlgebra, Random
-using WGLMakie
-WGLMakie.activate!() #hide
-Makie.inline!(true) #hide
+using Plots
 
+#=
+Some helper functions are below. This section can be skipped but is included
+for completeness.
+=#
 #-
 ## Generate swissroll dataset
 function swissroll(n)
     ## NOTE: these could be randomized too
     theta = 1.5 .* pi .+ 2.5 .* pi .* LinRange(0, 1, n)
-    z = [(i % 2) for i in 1:n]
+    z = [(i % 2)-1/2 for i in 1:n]
     return [theta' .* [cos.(theta'); sin.(theta')]; z'], theta
 end
 
@@ -27,6 +29,25 @@ function show_data(x, theta)
     scatter!(Point3f0.(eachcol(x)), color = theta, markersize=500)
     fig[1, 1] = ax
     return fig
+end
+
+function show_data(x, theta; c=(70,70))
+    Mx = maximum(abs.(x[1,:]))
+    My = maximum(abs.(x[2,:]))
+    Mz = maximum(abs.(x[3,:]))
+    MM = max(Mx, My, Mz)
+    Mx = max(Mx*1.1, MM*.9)
+    My = max(My*1.1, MM*.3)
+    Mz = max(Mz*1.1, MM*.3)
+    return scatter(x[1,:], x[2,:], x[3,:],
+        legend=false,
+        zcolor=theta,
+        xlims=(-Mx,Mx),
+        ylims=(-My, My),
+        zlims=(-Mz,Mz),
+        markersize=7,
+        camera=c
+    )
 end
 
 ## Constructs Euclidean Distance Matrix given vectors x = [x_1 ... x_n]
@@ -106,12 +127,13 @@ function reconstruct_from_sparse_varref(Zref, n)
 end
 
 #=
+## Problem Setup
 First, we construct a "swiss roll" test dataset, which is 3d but has intrinsic 
 dimension 2
 =#
 #-
 ## Construct Dataset
-n, k = 100, 2
+n, k = 80, 2
 x, theta = swissroll(n)
 show_data(x, theta)
 
@@ -122,23 +144,27 @@ Next, we setup the MVU SDP
 #-
 ## Construct problem data
 V, VA, b = get_constraint_matrices(x, k)
-C = V'*V
+C = V'*V;
 
+
+#=
+## Chordal Decomposition and Solve
+=#
 ## Chordal setup
 _, _, _, cliques = get_selectors(sparsity_pattern([VA..., C]); verbose=false, ret_cliques=true, perm=nothing)
 sp = Chordal.get_sparsity_pattern_from_cliques(cliques)
 sp_inds = zip(findnz(sp)[1:2]...)
 
 ## -- Construct Model --
-model_c = Model(Hypatia.Optimizer)
-Z = @variable(model_c, Z[i=1:n-1, j=1:n-1; (i,j) in sp_inds])
+model = Model(Hypatia.Optimizer)
+Z = @variable(model, Z[i=1:n-1, j=1:n-1; (i,j) in sp_inds])
 
 ## Objective
-@objective(model_c, Max, Chordal.tr(C, Z))
+@objective(model, Max, 1/length(sp_inds) * Chordal.tr(C, Z))
 
 ## Distrance-preserving equality constraints 
 for i in 1:length(b)
-    @constraint(model_c, Chordal.tr(VA[i], Z) == b[i])
+    @constraint(model, Chordal.tr(VA[i], Z) == b[i])
 end
 
 ## Chordal decomposition constraints (replace big PSD constraints with many small ones)
@@ -148,13 +174,15 @@ for cl in cliques
     for i in 1:len_cl, j in 1:len_cl
         Zp[i,j] = Z[cl[i], cl[j]]
     end
-    @constraint(model_c, Zp in PSDCone())
+    @constraint(model, Zp in PSDCone())
 end
 
 ## Optimize
-optimize!(model_c)
-display(solution_summary(model_c))
-
+optimize!(model)
+solution_summary(model)
+#=
+## Solution Reconstruction
+=#
 ## Reconstruct solution with min rank PSD completion
 Z_ = Chordal.reconstruct_from_sparse_varref(Z, n-1)
 Z_ = 0.5*(Z_ + Z_') # Deals with numerical error
