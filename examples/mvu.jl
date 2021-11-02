@@ -8,11 +8,7 @@ technique on a toy dataset.
 using Chordal
 using JuMP, Hypatia
 using SparseArrays, LinearAlgebra, Random
-# using JSServe #hide
-# JSServe.Page(;session=nothing, exportable=true, offline=true) #hide
-using WGLMakie
-WGLMakie.activate!() #hide
-set_theme!(resolution=(1200, 600)) #hide
+using Plots
 
 #=
 Some helper functions are below. This section can be skipped but is included
@@ -27,8 +23,23 @@ function swissroll(n)
     return [theta' .* [cos.(theta'); sin.(theta')]; z'], theta
 end
 
-function show_data(x, theta)
-    return scatter(Point3f.(eachcol(x)), color = theta, markersize=500)
+function show_data(x, theta; c=(70,70))
+    Mx = maximum(abs.(x[1,:]))
+    My = maximum(abs.(x[2,:]))
+    Mz = maximum(abs.(x[3,:]))
+    MM = max(Mx, My, Mz)
+    Mx = max(Mx*1.1, MM*.9)
+    My = max(My*1.1, MM*.3)
+    Mz = max(Mz*1.1, MM*.3)
+    return scatter(x[1,:], x[2,:], x[3,:],
+        legend=false,
+        zcolor=theta,
+        xlims=(-Mx,Mx),
+        ylims=(-My, My),
+        zlims=(-Mz,Mz),
+        markersize=7,
+        camera=c,
+    )
 end
 
 ## Constructs Euclidean Distance Matrix given vectors x = [x_1 ... x_n]
@@ -170,4 +181,4 @@ Z_ = 0.5*(Z_ + Z_') # Deals with numerical error
 Z_factor = Chordal.minrank_completion(Z_)
 W, sv, _ = svd(V*Z_factor)
 yc = Diagonal(sv[1:3])*W[:, 1:3]'
-show_data(yc, theta)
+show_data(yc, theta; c =(40,70))
