@@ -2,6 +2,10 @@ using Chordal
 using Documenter
 using Literate
 
+# For Plots.jl
+# https://discourse.julialang.org/t/plotting-errors-when-building-documentation-using-plots-jl-and-documenter-jl/67849
+ENV["GKSwstype"]="100"
+
 EXCLUDED_EXAMPLES = ["chordal_graph.jl", "sdp_standard.jl"]
 
 # utility function from https://github.com/JuliaOpt/Convex.jl/blob/master/docs/make.jl
