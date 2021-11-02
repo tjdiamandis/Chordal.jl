@@ -1,5 +1,5 @@
-# Maximum Variance Unfolding (MVU)
 #=
+# Maximum Variance Unfolding (MVU)
 This example uses `Chordal.jl` to perfomr the MVU dimensionality reduction 
 technique on a toy dataset.
 =#
@@ -8,9 +8,10 @@ technique on a toy dataset.
 using Chordal
 using JuMP, Hypatia
 using SparseArrays, LinearAlgebra, Random
-import JSServe #hide
-JSServe.Page(exportable=true, offline=true) #hide
+# using JSServe #hide
+# JSServe.Page(;session=nothing, exportable=true, offline=true) #hide
 using WGLMakie
+WGLMakie.activate!() #hide
 set_theme!(resolution=(1200, 600)) #hide
 
 #=
@@ -27,7 +28,7 @@ function swissroll(n)
 end
 
 function show_data(x, theta)
-    return scatter(Point3f0.(eachcol(x)), color = theta, markersize=500)
+    return scatter(Point3f.(eachcol(x)), color = theta, markersize=500)
 end
 
 ## Constructs Euclidean Distance Matrix given vectors x = [x_1 ... x_n]
