@@ -1,9 +1,13 @@
+using Pkg
 cd(joinpath(@__DIR__, "."))
 Pkg.activate(".")
 using Chordal
-using LinearAlgebra, SparseArrays, LightGraphs
+using LinearAlgebra, SparseArrays
 using Plots: spy
 using GraphPlot: gplot
+using Graphs
+import Cairo
+using Colors
 
 function plot_clique_graph(cg::Chordal.CliqueGraph)
         nc = length(cg.active_cliques)
@@ -14,8 +18,15 @@ function plot_clique_graph(cg::Chordal.CliqueGraph)
         edge_labels = [string(reduced_edge_mat[src(e),dst(e)]) for e in edges(clique_graph)]
         plt = gplot(
                 clique_graph,
+                NODESIZE=0.3/sqrt(nc),
                 nodelabel=node_labels,
+                nodelabelc=colorant"blue",
+                NODELABELSIZE=3,
+                # nodesize=100*ones(length(Graphs.vertices(clique_graph))),
+                nodefillc=colorant"white",
                 edgelabel=edge_labels,
+                edgelabelc=colorant"red",
+                EDGELINEWIDTH=0.5/sqrt(nc)
         )
 end
 
@@ -31,8 +42,9 @@ nonzero_inds = vcat([
     ],
     [(i,i) for i in 1:n]
 )
-sp = sparse(Chordal.unzip(nonzero_inds)..., [10i+j for (i, j) in nonzero_inds])
+sp = sparse(Chordal.unzip(nonzero_inds)..., [1 for (i, j) in nonzero_inds])
 spy(sp, ms=10)
+sp = sparse(Chordal.unzip(nonzero_inds)..., [10i+j for (i, j) in nonzero_inds])
 # c.f. Figure 1
 
 
