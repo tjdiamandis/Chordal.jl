@@ -1,13 +1,18 @@
 using Pkg
-cd(joinpath(@__DIR__, "."))
-Pkg.activate(".")
+Pkg.activate(@__DIR__)
 using Chordal
 using LinearAlgebra, SparseArrays
 using Plots: spy
-using GraphPlot: gplot
-using Graphs
-import Cairo
-using Colors
+using Graphs, GraphPlot, Cairo, Colors
+
+function show_cliques(mat, cliques)
+    nzs = findnz(mat)[1:2]
+    for clique in cliques
+        sp = sparse(nzs..., [(i in clique && j in clique)  ? 10 : 1 for (i, j) in Chordal.zip(nzs...)])
+        plt = spy(sp, ms=10, colorbar=false)
+        display(plt)
+    end
+end
 
 function plot_clique_graph(cg::Chordal.CliqueGraph)
         nc = length(cg.active_cliques)
@@ -15,7 +20,7 @@ function plot_clique_graph(cg::Chordal.CliqueGraph)
         reduced_edge_mat = cg.edge_mat[ind,ind]
         clique_graph = SimpleGraph(reduced_edge_mat)
         node_labels = ["$c" for (i, c) in enumerate(get_cliques(cg))]
-        edge_labels = [string(reduced_edge_mat[src(e),dst(e)]) for e in edges(clique_graph)]
+        edge_labels = [string(reduced_edge_mat[src(e),dst(e)]) for e in Graphs.edges(clique_graph)]
         plt = gplot(
                 clique_graph,
                 NODESIZE=0.3/sqrt(nc),
@@ -53,9 +58,10 @@ sp = sp + tril(sp, -1)'
 Chordal.preprocess!(sp)
 
 sparsity_graph = SimpleGraph(sp)
+gplot(sparsity_graph, nodelabel=1:nv(sparsity_graph))
 cliques = maximal_cliques(sparsity_graph)
 @info join(vcat(["Cliques are:"], ["\n\t\tC$i: $(cliques[i])" for i in 1:length(cliques)]))
-gplot(sparsity_graph, nodelabel=1:nv(sparsity_graph))
+show_cliques(sp, cliques)
 
 
 ## Generate clique graph
